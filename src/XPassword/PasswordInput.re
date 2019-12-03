@@ -29,7 +29,7 @@ type state = {
   content: string, // password content
   valid: bool, // is this field valid?
   passed: list(string), // passed rules
-  failed: string, // current failed rule
+  failed: option(string), // current failed rule
   showed: bool // is this field currently plain text
 };
 
@@ -37,7 +37,7 @@ let initState = {
   content: "",
   valid: false,
   passed: [],
-  failed: "",
+  failed: None,
   showed: false,
 };
 
@@ -50,9 +50,9 @@ let headStr = l =>
 // Utilities for spliting validateMap into passes and fails
 let rec ruleSplit = (a, allPassed) =>
   switch (a) {
-  | [] => (allPassed, "") // All true
-  | [(false, rule), ..._] => (allPassed, rule.r)
-  | [(true, rule), ...rest] => ruleSplit(rest, [rule.r, ...allPassed])
+  | [] => (allPassed, None) // All true
+  | [(false, rule), ..._] => (allPassed, Some(rule.r))
+  | [(true, rule), ...rest] => ruleSplit(rest, allPassed @ [rule.r])
   };
 
 // Available action
@@ -109,9 +109,10 @@ let make = () => {
        ->React.array}
     </div>
     <div>
-      {s.failed == ""
-         ? <div />
-         : <div> {React.string("x")} {React.string(s.failed)} </div>}
+      {switch (s.failed) {
+       | None => <div />
+       | Some(reason) => <div> {React.string("[x] " ++ reason)} </div>
+       }}
     </div>
   </div>;
 };
