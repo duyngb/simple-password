@@ -14,6 +14,7 @@
     "start": "bsb -make-world -w -ws _ ",
     "clean": "bsb -clean-world",
     "server": "moduleserve ./ --port 8000",
+    "start:dev": "webpack-dev-server --config webpack.config.dev.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -28,6 +29,9 @@
   },
   "devDependencies": {
     "bs-platform": "^5.2.1",
-    "moduleserve": "^0.9.0"
+    "moduleserve": "^0.9.0",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.9.0"
   }
 }
