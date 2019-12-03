@@ -13,8 +13,8 @@ module CompUsername = {
 [@react.component]
 let make = () => {
   <div>
-    <p> {React.string("chilled")} </p>
-    <p> <CompUsername /> </p>
-    <p> <PasswordInput /> </p>
+    <div> {React.string("chilled")} </div>
+    <div> <CompUsername /> </div>
+    <div> <PasswordInput /> </div>
   </div>;
 };
