@@ -98,8 +98,11 @@ let make = () => {
       {React.string(s.valid ? "Go on! No time for waiting" : "Opp")}
     </label>
     <div>
-      {List.map(
-         pass => <div> {React.string("v")} {React.string(pass)} </div>,
+      {List.mapi(
+         (idx, pass) =>
+           <div key={string_of_int(idx)}>
+             {React.string("[ok] " ++ pass)}
+           </div>,
          s.passed,
        )
        ->Array.of_list
