@@ -1,0 +1,33 @@
+{
+  "name": "reasonml-funny-password",
+  "version": "0.1.0",
+  "description": "Do a password really need that level of complicated?",
+  "author": "Stoik",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "github.com/duyngb/reasonml-funny-password"
+  },
+  "private": true,
+  "scripts": {
+    "build": "bsb -make-world",
+    "start": "bsb -make-world -w -ws _ ",
+    "clean": "bsb -clean-world",
+    "server": "moduleserve ./ --port 8000",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "BuckleScript",
+    "ReasonReact",
+    "reason-react"
+  ],
+  "dependencies": {
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "reason-react": ">=0.7.0"
+  },
+  "devDependencies": {
+    "bs-platform": "^5.2.1",
+    "moduleserve": "^0.9.0"
+  }
+}
