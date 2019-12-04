@@ -31,6 +31,16 @@ let rec hasSpecialChar = (prev, s) =>
     hasSpecialChar(hasThatChar, tl);
   };
 
+let rec repetitiveChecker = (lastChar, s) =>
+  switch (lastChar, s) {
+  | (_, "") => true
+  | (None, s) => repetitiveChecker(Some(s.[0]), tail(s))
+  | (Some(c), s) =>
+    let hd = s.[0];
+    let tl = tail(s);
+    c == hd ? false : repetitiveChecker(Some(hd), tl);
+  };
+
 type rule = {
   c: string => bool, // Checker
   r: string // Failed reason
@@ -52,6 +62,10 @@ let rules: list(rule) = [
   {
     c: s => hasSpecialChar(false, s),
     r: "Password must contain at least one special character found on US keyboard.",
+  },
+  {
+    c: s => repetitiveChecker(None, s),
+    r: "Password must not contain repetitive pattern.",
   },
   {
     c: s => String.contains(s, 'Q'),
