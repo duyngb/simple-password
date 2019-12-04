@@ -60,6 +60,13 @@ let rules: list(rule) = [
     r: "Password must contain at least one Latin uppercase letter.",
   },
   {
+    c: s =>
+      s
+      ->String.map(char => char >= '0' && char <= '9' ? 'o' : 'x', _)
+      ->String.contains(_, 'o'),
+    r: "Password must contain at least one Latin number.",
+  },
+  {
     c: s => hasSpecialChar(false, s),
     r: "Password must contain at least one special character found on US keyboard.",
   },
