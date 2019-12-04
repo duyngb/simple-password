@@ -1,34 +1,18 @@
-let id = i => i;
-let head = s => String.sub(s, 0, 1);
 let tail = s => String.sub(s, 1, String.length(s) - 1);
 
-let rec hasCap = (prev, s) =>
-  switch (prev, s) {
-  | (a, "") => a
-  | (true, _) => true
-  | (false, s) =>
-    let hd = head(s);
-    let tl = tail(s);
-    hasCap(hd == String.capitalize(hd), tl);
-  };
+let fxi = (fx, list) =>
+  list
+  |> List.mapi((idx, a) => fx(string_of_int(idx), a))
+  |> Array.of_list
+  |> React.array;
 
-let rec hasSpecialChar = (prev, s) =>
-  switch (prev, s) {
-  | (a, "") => a
-  | (true, _) => true
-  | (_, s) =>
-    let hd = s.[0];
-    let tl = tail(s);
-    let hasThatChar =
-      hd >= '!'
-      && hd <= '/'
-      || hd >= ':'
-      && hd <= '@'
-      || hd >= '['
-      && hd <= '`'
-      || hd >= '{'
-      && hd <= '~';
-    hasSpecialChar(hasThatChar, tl);
+let isSpecialChar = ch =>
+  switch (ch) {
+  | '!'..'/' => true
+  | ':'..'@' => true
+  | '['..'`' => true
+  | '{'..'~' => true
+  | _ => false
   };
 
 let rec repetitiveChecker = (lastChar, s) =>
@@ -41,6 +25,11 @@ let rec repetitiveChecker = (lastChar, s) =>
     c == hd ? false : repetitiveChecker(Some(hd), tl);
   };
 
+/** Check for condition defined in predicate over each character of string. */
+let strCheck = (predicate: char => bool, s: string) =>
+  s |> String.map(ch => predicate(ch) ? 'o' : 'x') |> String.contains(_, 'o');
+
+/** rule type */
 type rule = {
   c: string => bool, // Checker
   r: string // Failed reason
@@ -52,22 +41,15 @@ let rules: list(rule) = [
     r: "Password must be longer than 8 characters.",
   },
   {
-    c: s => String.length(s) < 14,
-    r: "Password must be shorter than 14 characters.",
-  },
-  {
-    c: s => hasCap(false, s),
+    c: strCheck(ch => ch == Char.uppercase_ascii(ch)),
     r: "Password must contain at least one Latin uppercase letter.",
   },
   {
-    c: s =>
-      s
-      ->String.map(char => char >= '0' && char <= '9' ? 'o' : 'x', _)
-      ->String.contains(_, 'o'),
+    c: strCheck(ch => ch >= '0' && ch <= '9'),
     r: "Password must contain at least one Latin number.",
   },
   {
-    c: s => hasSpecialChar(false, s),
+    c: strCheck(isSpecialChar),
     r: "Password must contain at least one special character found on US keyboard.",
   },
   {
@@ -75,12 +57,16 @@ let rules: list(rule) = [
     r: "Password must not contain repetitive pattern.",
   },
   {
-    c: s => String.contains(s, 'Q'),
-    r: "Password must contain character 'Q'.",
+    c: s => String.contains(s, 'q'),
+    r: "Password must contain character 'q' (lowercase).",
   },
   {
     c: s => String.contains(s, 'x'),
-    r: "Password must contain character 'x'.",
+    r: "Password must contain character 'x' (lowercase).",
+  },
+  {
+    c: s => String.length(s) < 14,
+    r: "Password must be shorter than 14 characters.",
   },
 ];
 
@@ -106,7 +92,7 @@ let rec ruleSplit = (a, allPassed) =>
   switch (a) {
   | [] => (allPassed, None) // All true
   | [(false, rule), ..._] => (allPassed, Some(rule.r))
-  | [(true, rule), ...rest] => ruleSplit(rest, allPassed @ [rule.r])
+  | [(true, rule), ...rest] => ruleSplit(rest, [rule.r, ...allPassed])
   };
 
 // Available action
@@ -149,24 +135,14 @@ let make = () => {
         checked={s.showed}
         onChange={_ => d(Toggle)}
       />
-      {React.string(s.valid ? "Go on! No time for waiting" : "Opp")}
+      {React.string(s.valid ? "You are good to go" : "Opp")}
     </label>
-    <div>
-      {List.mapi(
-         (idx, pass) =>
-           <div key={string_of_int(idx)}>
-             {React.string("[ok] " ++ pass)}
-           </div>,
-         s.passed,
-       )
-       ->Array.of_list
-       ->React.array}
-    </div>
     <div>
       {switch (s.failed) {
        | None => <div />
        | Some(reason) => <div> {React.string("[x] " ++ reason)} </div>
        }}
+      {s.passed |> fxi((key, pass) => <div key> {React.string(pass)} </div>)}
     </div>
   </div>;
 };
