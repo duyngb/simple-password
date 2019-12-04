@@ -12,6 +12,25 @@ let rec hasCap = (prev, s) =>
     hasCap(hd == String.capitalize(hd), tl);
   };
 
+let rec hasSpecialChar = (prev, s) =>
+  switch (prev, s) {
+  | (a, "") => a
+  | (true, _) => true
+  | (_, s) =>
+    let hd = s.[0];
+    let tl = tail(s);
+    let hasThatChar =
+      hd >= '!'
+      && hd <= '/'
+      || hd >= ':'
+      && hd <= '@'
+      || hd >= '['
+      && hd <= '`'
+      || hd >= '{'
+      && hd <= '~';
+    hasSpecialChar(hasThatChar, tl);
+  };
+
 type rule = {
   c: string => bool, // Checker
   r: string // Failed reason
@@ -29,6 +48,10 @@ let rules: list(rule) = [
   {
     c: s => hasCap(false, s),
     r: "Password must contain at least one Latin uppercase letter.",
+  },
+  {
+    c: s => hasSpecialChar(false, s),
+    r: "Password must contain at least one special character found on US keyboard.",
   },
   {
     c: s => String.contains(s, 'Q'),
