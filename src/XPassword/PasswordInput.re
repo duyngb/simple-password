@@ -1,4 +1,16 @@
-// Internal constrains for password validation
+let id = i => i;
+let head = s => String.sub(s, 0, 1);
+let tail = s => String.sub(s, 1, String.length(s) - 1);
+
+let rec hasCap = (prev, s) =>
+  switch (prev, s) {
+  | (a, "") => a
+  | (true, _) => true
+  | (false, s) =>
+    let hd = head(s);
+    let tl = tail(s);
+    hasCap(hd == String.capitalize(hd), tl);
+  };
 
 type rule = {
   c: string => bool, // Checker
@@ -13,6 +25,10 @@ let rules: list(rule) = [
   {
     c: s => String.length(s) < 14,
     r: "Password must be shorter than 14 characters.",
+  },
+  {
+    c: s => hasCap(false, s),
+    r: "Password must contain at least one Latin uppercase letter.",
   },
   {
     c: s => String.contains(s, 'Q'),
@@ -40,12 +56,6 @@ let initState = {
   failed: None,
   showed: false,
 };
-
-let headStr = l =>
-  switch (l) {
-  | [] => ""
-  | [(_, a), ..._] => a
-  };
 
 // Utilities for spliting validateMap into passes and fails
 let rec ruleSplit = (a, allPassed) =>
