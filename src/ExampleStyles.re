@@ -1,10 +1,16 @@
 let reasonReactBlue = "#48a9dc";
+let borderRadius = "0.5rem";
+let borderRadius2 = "0.25rem";
 
 // The {j|...|j} feature is just string interpolation, from
 // bucklescript.github.io/docs/en/interop-cheatsheet#string-unicode-interpolation
 // This allows us to conveniently write CSS, together with variables, by
 // constructing a string
 let style = {j|
+  html, body {
+    width: 100vw;
+    margin: 0;
+  }
   body {
     background-color: rgb(224, 226, 229);
     display: flex;
@@ -23,22 +29,30 @@ let style = {j|
     background-color: $reasonReactBlue;
     color: white;
   }
+  .container-row {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 400px;
+  }
   .container {
-    margin: 12px 0px;
+    margin: 12px;
     box-shadow: 0px 4px 16px rgb(200, 200, 200);
-    width: 720px;
-    border-radius: 12px;
+    border-radius: $borderRadius;
     font-family: sans-serif;
   }
   .containerTitle {
     background-color: rgb(242, 243, 245);
-    border-radius: 12px 12px 0px 0px;
+    border-radius: $borderRadius $borderRadius 0px 0px;
     padding: 12px;
     font-weight: bold;
   }
   .containerContent {
     background-color: white;
     padding: 16px;
-    border-radius: 0px 0px 12px 12px;
+    border-radius: 0px 0px $borderRadius $borderRadius;
   }
+@media screen and (min-width: 400px) {
+  html, body { overflow-x: hidden; }
+}
 |j};

@@ -10,6 +10,9 @@ document##head##appendChild(style);
 style##innerHTML #= ExampleStyles.style;
 
 let makeContainer = text => {
+  let containerRow = document##createElement("div");
+  containerRow##className #= "container-row";
+
   let container = document##createElement("div");
   container##className #= "container";
 
@@ -22,7 +25,8 @@ let makeContainer = text => {
 
   let () = container##appendChild(title);
   let () = container##appendChild(content);
-  let () = document##body##appendChild(container);
+  let () = containerRow##appendChild(container);
+  let () = document##body##appendChild(containerRow);
 
   content;
 };
