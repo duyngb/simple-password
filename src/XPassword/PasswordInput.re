@@ -29,6 +29,13 @@ let rec repetitiveChecker = (lastChar, s) =>
 let strCheck = (predicate: char => bool, s: string) =>
   s |> String.map(ch => predicate(ch) ? 'o' : 'x') |> String.contains(_, 'o');
 
+let isHasEmoji = s =>
+  s
+  |> Rope.str_to_list
+  |> Rope.rev_utf16_be
+  |> Emo.emoji_folder
+  |> List.exists(x => x != []);
+
 /** rule type */
 type rule = {
   c: string => bool, // Checker
@@ -64,6 +71,7 @@ let rules: list(rule) = [
     c: s => String.contains(s, 'x'),
     r: "Password must contain character 'x' (lowercase).",
   },
+  {c: isHasEmoji, r: "Must have one emoji."},
   {
     c: s => String.length(s) < 14,
     r: "Password must be shorter than 14 characters.",
