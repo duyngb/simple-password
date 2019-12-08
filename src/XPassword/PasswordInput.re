@@ -87,15 +87,11 @@ let strCheck = (predicate: char => bool, s: string) =>
 /** Predefined rules. */
 let rules: list(rule) = [
   {
-    c: s =>
-      strCheck(
-        ch =>
-          switch (ch) {
-          | 'A'..'Z' => true
-          | _ => false
-          },
-        s.content,
-      ),
+    c: s => String.length(s.content) >= 8,
+    r: "Password must be at least 8 characters.",
+  },
+  {
+    c: stc $ strCheck(ch => ch >= 'A' && ch <= 'Z'),
     r: "Password must contain at least one common Latin uppercase letter.",
   },
   {
@@ -105,10 +101,6 @@ let rules: list(rule) = [
   {
     c: stc $ strCheck(isSpecialChar),
     r: "Password must contain at least one special character found on US keyboard.",
-  },
-  {
-    c: s => String.length(s.content) >= 8,
-    r: "Password must be at least 8 characters.",
   },
   {
     c: stc $ repetitiveChecker(None),
@@ -214,7 +206,7 @@ let make = () => {
     (s->isStateValid ? "You are good to go" : "Opp")->React.string
     <div className="reasons">
       {switch (s.failed) {
-       | None => <div />
+       | None => ReasonReact.null
        | Some(reason) =>
          <div className="failed" key={s.iteration->string_of_int}>
            reason->React.string
