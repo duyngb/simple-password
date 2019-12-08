@@ -15,12 +15,18 @@ module.exports = {
     moduleIds: 'deterministic',
     runtimeChunk: 'single',
     splitChunks: {
-      chunks: 'all',
+      chunks: 'async',
+      minChunks: 1,
+      minSize: 1024*30,
+      maxAsyncRequests: 6,
       cacheGroups: {
-        vendor: {
+        vendors: {
+          chunks: 'all',
           test: /[\\/]node_modules[\\/]/,
+          priority: -20,
           name: 'vendors',
-          chunks: 'all'
+          reuseExistingChunk: true,
+          enforce: true
         }
       }
     }
