@@ -25,10 +25,6 @@ let rec repetitiveChecker = (lastChar, s) =>
     c == hd ? false : repetitiveChecker(Some(hd), tl);
   };
 
-/** Check for condition defined in predicate over each character of string. */
-let strCheck = (predicate: char => bool, s: string) =>
-  s |> String.map(ch => predicate(ch) ? 'o' : 'x') |> String.contains(_, 'o');
-
 /** Check if this string has emoji or not. */
 let isHasEmoji = s =>
   s
@@ -69,11 +65,15 @@ type rule = {
 let ($) = (f, g, x) => f(x) |> g;
 let stc = s => s.content;
 
+/** Check for condition defined in predicate over each character of string. */
+let strCheck = (predicate: char => bool, s: string) =>
+  s |> String.map(ch => predicate(ch) ? 'o' : 'x') |> String.contains(_, 'o');
+
 /** Predefined rules. */
 let rules: list(rule) = [
   {
-    c: s => String.length(s.content) > 8,
-    r: "Password must be longer than 8 characters.",
+    c: s => String.length(s.content) >= 8,
+    r: "Password must be at least 8 characters.",
   },
   {
     c: s => strCheck(ch => ch == Char.uppercase_ascii(ch), s.content),
@@ -112,12 +112,12 @@ let rules: list(rule) = [
     r: "Must have one emoji.",
   },
   {
-    c: s => String.length(s.content) < 14,
-    r: "Password must be shorter than 14 characters.",
+    c: s => String.length(s.content) <= 14,
+    r: "Password must be at most 14 characters.",
   },
 ];
 
-// Utilities for spliting validateMap into passes and fails
+// Utilities for splitting validate map into passes and fails
 let rec ruleSplit = (a, allPassed) =>
   switch (a) {
   | [] => (allPassed, None) // All true
