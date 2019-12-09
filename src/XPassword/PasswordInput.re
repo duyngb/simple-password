@@ -135,12 +135,14 @@ type action =
   | Respect(int)
   | Toggle;
 
+let ruleCheck = state => rules |> (r => r.c(state))->List.map;
+
 /** Unified reducer. */
 let reducer = (s, action) =>
   switch (action) {
   | OnChange(content) =>
-    let validated = List.map(rule => rule.c({...s, content}), rules);
-    let (passed, failed) = List.combine(validated, rules)->ruleSplit @@ [];
+    let (passed, failed) =
+      {...s, content}->ruleCheck->List.combine(rules)->ruleSplit([]);
     {...s, content, passed, failed};
   | Respect(keyCode) => {...s, respected: Some(keyCode == 70)}
   | Toggle => {...s, showed: !s.showed}
@@ -154,11 +156,11 @@ let make = () => {
     <label>
       {React.string("Password")}
       <input
-        type_={s.showed ? "string" : "password"}
+        type_={s.showed ? "text" : "password"}
         name="password"
         required=true
         minLength=8
-        onChange={e => d(OnChange(e->ReactEvent.Form.target##value))}
+        onChange={e => e->ReactEvent.Form.target##value->OnChange->d}
         onKeyDown={
           switch (s.respected) {
           | Some(true) => (_ => ())
