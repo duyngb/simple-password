@@ -112,6 +112,10 @@ let rules: list(rule) = [
     r: "Must have one emoji.",
   },
   {
+    c: stc $ strCheck(ch => ch != ' '),
+    r: "Space is not allowed in password (for an obvious security reason).",
+  },
+  {
     c: s => String.length(s.content) <= 14,
     r: "Password must be at most 14 characters.",
   },
