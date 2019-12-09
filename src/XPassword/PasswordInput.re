@@ -134,10 +134,10 @@ type action =
 /** Unified reducer. */
 let reducer = (s, action) =>
   switch (action) {
-  | OnChange(c) =>
-    let validated = List.map(rule => rule.c(s), rules);
+  | OnChange(content) =>
+    let validated = List.map(rule => rule.c({...s, content}), rules);
     let (passed, failed) = List.combine(validated, rules)->ruleSplit @@ [];
-    {...s, content: c, passed, failed};
+    {...s, content, passed, failed};
   | Respect(keyCode) => {...s, respected: Some(keyCode == 70)}
   | Toggle => {...s, showed: !s.showed}
   };
