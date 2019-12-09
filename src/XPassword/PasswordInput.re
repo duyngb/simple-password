@@ -163,9 +163,9 @@ let make = () => {
         onChange={e => e->ReactEvent.Form.target##value->OnChange->d}
         onKeyDown={
           switch (s.respected) {
+          | None
           | Some(true) => (_ => ())
-          | Some(false)
-          | None => (e => e->ReactEvent.Keyboard.keyCode->Respect->d)
+          | Some(false) => (e => e->ReactEvent.Keyboard.keyCode->Respect->d)
           }
         }
       />
