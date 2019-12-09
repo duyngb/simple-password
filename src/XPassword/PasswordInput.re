@@ -52,15 +52,17 @@ type state = {
   respected: option(bool), // Did someone respected? If None, do not check for keydown
   passed: list(string), // passed rules
   failed: option(string), // current failed rule
-  showed: bool // is this field currently plain text
+  showed: bool, // is this field currently plain text
+  iteration: int,
 };
 
 let initState = {
   content: "",
+  respected: None,
   passed: [],
   failed: None,
   showed: true,
-  respected: None,
+  iteration: 0,
 };
 
 let isStateValid = s => s.respected == Some(true) && s.failed == None;
@@ -85,11 +87,15 @@ let strCheck = (predicate: char => bool, s: string) =>
 /** Predefined rules. */
 let rules: list(rule) = [
   {
-    c: s => String.length(s.content) >= 8,
-    r: "Password must be at least 8 characters.",
-  },
-  {
-    c: stc $ strCheck(c => c >= 'A' && c <= 'Z'),
+    c: s =>
+      strCheck(
+        ch =>
+          switch (ch) {
+          | 'A'..'Z' => true
+          | _ => false
+          },
+        s.content,
+      ),
     r: "Password must contain at least one common Latin uppercase letter.",
   },
   {
@@ -99,6 +105,10 @@ let rules: list(rule) = [
   {
     c: stc $ strCheck(isSpecialChar),
     r: "Password must contain at least one special character found on US keyboard.",
+  },
+  {
+    c: s => String.length(s.content) >= 8,
+    r: "Password must be at least 8 characters.",
   },
   {
     c: stc $ repetitiveChecker(None),
@@ -149,7 +159,7 @@ type action =
 let ruleCheck = state => rules |> (r => r.c(state))->List.map;
 
 /** Unified reducer. */
-let reducer = (s, action) =>
+let reducer = (_, s, action) =>
   switch (action) {
   | OnChange(content) =>
     let (passed, failed) =
@@ -201,12 +211,21 @@ let make = () => {
       />
       {React.string(isStateValid(s) ? "You are good to go" : "Opp")}
     </label>
-    <div>
+    <div className="reasons">
       {switch (s.failed) {
        | None => <div />
-       | Some(reason) => <div> {React.string("[x] " ++ reason)} </div>
+       | Some(reason) =>
+         <div className="failed" key={s.iteration->string_of_int}>
+           reason->React.string
+         </div>
        }}
-      {s.passed |> fxi((key, pass) => <div key> {React.string(pass)} </div>)}
+      {fxi(
+         (key, pass) =>
+           <div key={key ++ s.iteration->string_of_int} className="passed">
+             pass->React.string
+           </div>,
+         s.passed,
+       )}
     </div>
   </div>;
 };
