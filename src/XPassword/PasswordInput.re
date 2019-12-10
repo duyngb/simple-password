@@ -154,7 +154,18 @@ let reducer = (s, action) =>
   | OnChange(content) =>
     let (passed, failed) =
       {...s, content}->ruleCheck->List.combine(rules)->ruleSplit([]);
-    {...s, content, passed, failed};
+    let iteration = failed != s.failed ? s.iteration + 1 : s.iteration;
+    // Enable key hook when it's required to pay respect, otherwise, keep it.
+    let (respected, content) =
+      switch (failed, s.respected) {
+      | (Some("Press F to pay respect!"), None) => (Some(false), content)
+      | (Some("Press F to pay respect!"), Some(r)) => (
+          Some(r),
+          String.sub(content, 0, String.length(content) - 1),
+        )
+      | (_, r) => (r, content)
+      };
+    {...s, content, passed, failed, iteration, respected};
   | Respect(keyCode) => {...s, respected: Some(keyCode == 70)}
   | Toggle => {...s, showed: !s.showed}
   };
@@ -171,6 +182,8 @@ let make = () => {
         name="password"
         required=true
         minLength=8
+        maxLength=25
+        value={s.content}
         onChange={e => e->ReactEvent.Form.target##value->OnChange->d}
         onKeyDown={
           switch (s.respected) {
