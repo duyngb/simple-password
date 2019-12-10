@@ -1,0 +1,14 @@
+div.progress-bar {
+    height: 0.3rem;
+    width: 100%;
+    background: blue;
+    transform-origin: 0;
+}
+div.progress-bar.running {
+    animation: scl 5s infinite;
+}
+
+@keyframes scl {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+}
