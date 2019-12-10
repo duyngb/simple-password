@@ -126,7 +126,7 @@ let rules: list(rule) = [
   },
   {c: stc $ emoPointer, r: "Must point left or right, but not up or down."},
   {
-    c: stc $ strCheck(ch => ch != ' '),
+    c: stc $ strCheck(ch => ch == ' ') $ (!),
     r: "Space is not allowed in password (for an obvious security reason).",
   },
   {
