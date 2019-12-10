@@ -12,7 +12,7 @@ module.exports = {
     filename: '[name].js',
   },
   optimization: {
-    moduleIds: "hashed",
+    moduleIds: 'deterministic',
     runtimeChunk: 'single',
     splitChunks: {
       chunks: 'all',
