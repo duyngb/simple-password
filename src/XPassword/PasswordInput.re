@@ -33,6 +33,19 @@ let isHasEmoji = s =>
   |> Emo.emoji_folder
   |> List.exists(x => x != []);
 
+let emoPointer = (s: string) =>
+  s
+  |> Rope.str_to_list
+  |> Rope.rev_utf16_be
+  |> Emo.emoji_folder
+  |> List.exists(
+       fun
+       | [0x1F448 | 0x1F449]
+       | [0x1F448 | 0x1F449, 0x1F3FB | 0x1F3FC | 0x1F3FD | 0x1F3FE | 0x1F3FF] =>
+         true
+       | _ => false,
+     );
+
 /** Unified password field state. */
 type state = {
   content: string, // password content
@@ -111,6 +124,7 @@ let rules: list(rule) = [
     c: stc $ isHasEmoji, //
     r: "Must have one emoji.",
   },
+  {c: stc $ emoPointer, r: "Must point left or right, but not up or down."},
   {
     c: stc $ strCheck(ch => ch != ' '),
     r: "Space is not allowed in password (for an obvious security reason).",
