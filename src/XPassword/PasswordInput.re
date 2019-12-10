@@ -61,7 +61,7 @@ let initState = {
   respected: None,
   passed: [],
   failed: None,
-  showed: true,
+  showed: false,
   iteration: 0,
 };
 
@@ -159,7 +159,7 @@ type action =
 let ruleCheck = state => rules |> (r => r.c(state))->List.map;
 
 /** Unified reducer. */
-let reducer = (_, s, action) =>
+let reducer = (s, action) =>
   switch (action) {
   | OnChange(content) =>
     let (passed, failed) =
@@ -185,8 +185,10 @@ let make = () => {
   let (s, d) = React.useReducer(reducer, initState);
 
   <div>
-    <label>
-      {React.string("Password")}
+    <div className="input-group">
+      <label className="prepend preserved-width">
+        "Password"->React.string
+      </label>
       <input
         type_={s.showed ? "text" : "password"}
         name="password"
@@ -197,20 +199,19 @@ let make = () => {
         onChange={e => e->ReactEvent.Form.target##value->OnChange->d}
         onKeyDown={
           switch (s.respected) {
-          | None
-          | Some(true) => (_ => ())
           | Some(false) => (e => e->ReactEvent.Keyboard.keyCode->Respect->d)
+          | _ => (_ => ())
           }
         }
       />
-      <input
-        type_="checkbox"
-        name="show-text"
-        checked={s.showed}
-        onChange={_ => d(Toggle)}
-      />
-      {React.string(isStateValid(s) ? "You are good to go" : "Opp")}
-    </label>
+      <button
+        className="append button"
+        reversed={s.showed}
+        onClick={_ => d(Toggle)}>
+        "Hint"->React.string
+      </button>
+    </div>
+    (s->isStateValid ? "You are good to go" : "Opp")->React.string
     <div className="reasons">
       {switch (s.failed) {
        | None => <div />
@@ -221,9 +222,7 @@ let make = () => {
        }}
       {fxi(
          (key, pass) =>
-           <div key={key ++ s.iteration->string_of_int} className="passed">
-             pass->React.string
-           </div>,
+           <div key className="passed"> pass->React.string </div>,
          s.passed,
        )}
     </div>

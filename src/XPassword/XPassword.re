@@ -3,10 +3,10 @@
 module CompUsername = {
   [@react.component]
   let make = () => {
-    <label>
-      {React.string("Username")}
+    <div className="input-group">
+      <label className="prepend preserved-width"> "Username"->React.string </label>
       <input type_="text" name="username" />
-    </label>;
+    </div>;
   };
 };
 
