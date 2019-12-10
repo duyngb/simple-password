@@ -89,8 +89,8 @@ let rules: list(rule) = [
     r: "Password must be at least 8 characters.",
   },
   {
-    c: s => strCheck(ch => ch == Char.uppercase_ascii(ch), s.content),
-    r: "Password must contain at least one Latin uppercase letter.",
+    c: stc $ strCheck(c => c >= 'A' && c <= 'Z'),
+    r: "Password must contain at least one common Latin uppercase letter.",
   },
   {
     c: stc $ strCheck(ch => ch >= '0' && ch <= '9'),
@@ -105,14 +105,6 @@ let rules: list(rule) = [
     r: "Password must not contain repetitive pattern.",
   },
   {
-    c: st =>
-      switch (st.respected) {
-      | None => false
-      | Some(respected) => respected
-      },
-    r: "Press F to pay respect!",
-  },
-  {
     c: stc $ String.contains(_, 'q'),
     r: "Password must contain character 'q' (lowercase).",
   },
@@ -121,9 +113,14 @@ let rules: list(rule) = [
     r: "Password must contain character 'x' (lowercase).",
   },
   {
-    c: stc $ isHasEmoji, //
-    r: "Must have one emoji.",
+    c: st =>
+      switch (st.respected) {
+      | None => false
+      | Some(respected) => respected
+      },
+    r: "Press F to pay respect!",
   },
+  {c: stc $ isHasEmoji, r: "Must have one emoji."},
   {c: stc $ emoPointer, r: "Must point left or right, but not up or down."},
   {
     c: stc $ strCheck(ch => ch == ' ') $ (!),
