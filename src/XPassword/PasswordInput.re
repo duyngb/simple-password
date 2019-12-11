@@ -6,6 +6,24 @@ let fxi = (fx, list) =>
   |> Array.of_list
   |> React.array;
 
+let diff = (n, o) => [];
+
+let rec yankPasted = (newContent, oldContent) => {
+  let n = newContent |> Rope.str_to_list |> Rope.rev_utf16_be;
+  let o = oldContent |> Rope.str_to_list |> Rope.rev_utf16_be;
+
+  let l = List.compare_lengths(n, o);
+  Js.log(l);
+
+  switch (l) {
+  | (-1) => yankPasted(oldContent, newContent)
+  | 0
+  | 1 => false
+  | 2 => Emo.emoji_folder(diff(n, o)) == []
+  | _ => true
+  };
+};
+
 let isSpecialChar = ch =>
   switch (ch) {
   | '!'..'/' => true
@@ -160,20 +178,24 @@ let ruleCheck = state => rules |> (r => r.c(state))->List.map;
 let reducer = (s, action) =>
   switch (action) {
   | OnChange(content) =>
-    let (passed, failed) =
-      {...s, content}->ruleCheck->List.combine(rules)->ruleSplit([]);
-    let iteration = failed != s.failed ? s.iteration + 1 : s.iteration;
-    // Enable key hook when it's required to pay respect, otherwise, keep it.
-    let (respected, content) =
-      switch (failed, s.respected) {
-      | (Some("Press F to pay respect!"), None) => (Some(false), content)
-      | (Some("Press F to pay respect!"), Some(r)) => (
-          Some(r),
-          String.sub(content, 0, String.length(content) - 1),
-        )
-      | (_, r) => (r, content)
-      };
-    {...s, content, passed, failed, iteration, respected};
+    if (yankPasted(content, s.content)) {
+      {...s, content: ""};
+    } else {
+      let (passed, failed) =
+        {...s, content}->ruleCheck->List.combine(rules)->ruleSplit([]);
+      let iteration = failed != s.failed ? s.iteration + 1 : s.iteration;
+      // Enable key hook when it's required to pay respect, otherwise, keep it.
+      let (respected, content) =
+        switch (failed, s.respected) {
+        | (Some("Press F to pay respect!"), None) => (Some(false), content)
+        | (Some("Press F to pay respect!"), Some(r)) => (
+            Some(r),
+            String.sub(content, 0, String.length(content) - 1),
+          )
+        | (_, r) => (r, content)
+        };
+      {...s, content, passed, failed, iteration, respected};
+    }
   | Respect(keyCode) => {...s, respected: Some(keyCode == 70)}
   | TimerReset => initState
   | OnPaste(dispatcher) =>
