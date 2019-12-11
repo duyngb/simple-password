@@ -24,20 +24,55 @@ let make = () => {
     let nc = e->ReactEvent.Form.target##value;
     contentSetter(x => {
       let (_, n) = x;
-      differ(updateR, nc, n);
+      // differ(updateR, nc, n);
       (n, nc);
     });
   };
-  let onKeyDown = e =>
-    if (e->ReactEvent.Keyboard.keyCode == 13 && e->ReactEvent.Keyboard.shiftKey) {
+  let onKeyDown = e => {
+    let keyCode = e->ReactEvent.Keyboard.keyCode;
+    let keyName = e->ReactEvent.Keyboard.key;
+    let isShift = e->ReactEvent.Keyboard.shiftKey;
+    let isCtrl = e->ReactEvent.Keyboard.ctrlKey;
+
+    let r =
+      "key code = "
+      ++ keyCode->string_of_int
+      ++ "\n  isShift = "
+      ++ isShift->string_of_bool
+      ++ "\n  isCtrl = "
+      ++ isCtrl->string_of_bool
+      ++ "\nFriendly key name: "
+      ++ keyName;
+    updateR(_ => r);
+
+    if (keyCode == 13 && isShift) {
       contentSetter(_ => ("", ""));
     };
+  };
+
+  let onPaste = e => {
+    e->ReactEvent.Clipboard.preventDefault;
+    updateR(r => r ++ "\n<!> on-paste event caught and prevented!");
+  };
+
+  let onDrop = e => {
+    e->ReactEvent.Mouse.preventDefault;
+    updateR(r => r ++ "\n<!> on-drop event caught and prevented!");
+  };
 
   <div>
     <p> "Playground placeholder"->React.string </p>
     <div className="input-group">
       <label className="prepend preserved-width" />
-      <input style value=newContent spellCheck=false onChange onKeyDown />
+      <input
+        style
+        value=newContent
+        spellCheck=false
+        onChange
+        onKeyDown
+        onPaste
+        onDrop
+      />
     </div>
     <div className="rows">
       <div className="input-group">
@@ -55,7 +90,7 @@ let make = () => {
     </div>
     <div className="input-group">
       <label className="prepend preserved-width">
-        "Diff report"->React.string
+        "Report Zone"->React.string
       </label>
       <span> <pre style> r->React.string </pre> </span>
     </div>
