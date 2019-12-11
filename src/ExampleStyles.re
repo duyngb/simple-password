@@ -68,11 +68,28 @@ input { padding: 0.25rem; }
 .input-group > *:not(:first-child) { border-top-left-radius: 0; border-bottom-left-radius: 0;}
 .input-group > *:not(:last-child) { border-top-right-radius: 0; border-bottom-right-radius: 0;}
 
-.input-group > input:focus {
+.input-group input { z-index: 20; }
+.input-group input:focus {
   border-color: #80bdff;
   box-shadow: 0 0 0 .2rem rgba(0,123,255,.35);
-  z-index: 3;
+  z-index: 30;
 }
+
+.input-group .input-group-row > * { border: none; flex-grow: 1; }
+.input-group-row { padding: 0; display: flex; flex-direction: column; }
+.input-group-row > .progress { position: relative; bottom: 0; }
+
+div.progress { width: 100%; margin-top: -0.2rem; z-index: 31; }
+div.progress-bar { display: flex; align-items: center; height: 100%; }
+div.progress-bar:after {
+  background-color: lightgreen;
+  width: 100%;
+  transform-origin: 0;
+  height: 100%;
+  transition: width 1.6s ease;
+  content: '';}
+div.progress-bar:not([disabled]):after { animation: scl 30s ease-in-out; }
+
 .button:hover, .button[reversed] {background-color: gray; color: whitesmoke;}
 .button[reversed]:hover {background-color: unset; color: unset;}
 
@@ -83,6 +100,11 @@ input { padding: 0.25rem; }
 @keyframes pushed-left {
   from { transform: translate(2rem, 0); opacity: 0; }
   to   { transform: translate(0, 0); opacity: 1; }
+}
+@keyframes scl {
+  50% {background-color: yellowgreen;}
+  90% {background-color: red;}
+  to {width: 0;background-color: red;}
 }
 
 @media screen and (min-width: 400px) {

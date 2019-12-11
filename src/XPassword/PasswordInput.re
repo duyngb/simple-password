@@ -54,6 +54,7 @@ type state = {
   failed: option(string), // current failed rule
   showed: bool, // is this field currently plain text
   iteration: int,
+  timer: bool,
 };
 
 let initState = {
@@ -63,6 +64,7 @@ let initState = {
   failed: None,
   showed: false,
   iteration: 0,
+  timer: false,
 };
 
 let isStateValid = s => s.respected == Some(true) && s.failed == None;
@@ -146,6 +148,7 @@ let rec ruleSplit = (a, allPassed) =>
 type action =
   | OnChange(string)
   | Respect(int)
+  | TimerReset
   | Toggle;
 
 let ruleCheck = state => rules |> (r => r.c(state))->List.map;
@@ -169,38 +172,57 @@ let reducer = (s, action) =>
       };
     {...s, content, passed, failed, iteration, respected};
   | Respect(keyCode) => {...s, respected: Some(keyCode == 70)}
-  | Toggle => {...s, showed: !s.showed}
+  | TimerReset => initState
+  | Toggle => {...s, showed: !s.showed, timer: true}
   };
 
 [@react.component]
 let make = () => {
   let (s, d) = React.useReducer(reducer, initState);
+  let (timerEnabled, timerSetter) = React.useState(() => false);
 
-  <div>
+  <div className="input-group-rows">
     <div className="input-group">
       <label className="prepend preserved-width">
         "Password"->React.string
       </label>
-      <input
-        type_={s.showed ? "text" : "password"}
-        name="password"
-        required=true
-        minLength=8
-        maxLength=25
-        value={s.content}
-        onChange={e => e->ReactEvent.Form.target##value->OnChange->d}
-        onKeyDown={
-          switch (s.respected) {
-          | Some(false) => (e => e->ReactEvent.Keyboard.keyCode->Respect->d)
-          | _ => (_ => ())
+      <div className="input-group-row">
+        <input
+          type_={s.showed ? "text" : "password"}
+          name="password"
+          placeholder="Just a simple password..."
+          required=true
+          minLength=8
+          maxLength=25
+          value={s.content}
+          onChange={e => e->ReactEvent.Form.target##value->OnChange->d}
+          onKeyDown={
+            switch (s.respected) {
+            | Some(false) => (e => e->ReactEvent.Keyboard.keyCode->Respect->d)
+            | _ => (_ => ())
+            }
           }
-        }
-      />
+        />
+        {s.timer
+           ? <Timer
+               endProgressCb={_ => {
+                 Js.log("animation ended");
+                 timerSetter(_ => false);
+                 d(TimerReset);
+               }}
+               fs=timerEnabled
+               fd=timerSetter
+             />
+           : ReasonReact.null}
+      </div>
       <button
         className="append button"
         reversed={s.showed}
-        onClick={_ => d(Toggle)}>
-        "Hint"->React.string
+        onClick={_ => {
+          timerSetter(_ => true);
+          d(Toggle);
+        }}>
+        <i> "Hint"->React.string </i>
       </button>
     </div>
     (s->isStateValid ? "You are good to go" : "Opp")->React.string
@@ -212,11 +234,10 @@ let make = () => {
            reason->React.string
          </div>
        }}
-      {fxi(
-         (key, pass) =>
-           <div key className="passed"> pass->React.string </div>,
-         s.passed,
-       )}
+      {s.passed
+       |> fxi((key, pass) =>
+            <div key className="passed"> pass->React.string </div>
+          )}
     </div>
   </div>;
 };
