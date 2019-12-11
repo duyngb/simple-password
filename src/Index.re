@@ -26,9 +26,6 @@ let makeContainer = text => {
   content;
 };
 
+ReactDOMRe.render(<Playground />, makeContainer("Playground"));
 
-ReactDOMRe.render(
-  <XPassword>
-  </XPassword>,
-  makeContainer("X-Password"),
-);
+ReactDOMRe.render(<XPassword />, makeContainer("A Simple Register Form"));
