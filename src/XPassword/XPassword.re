@@ -12,39 +12,23 @@ module CompUsername = {
   };
 };
 
-[@bs.val]
-external requestAnimationFrame: (int => unit) => unit =
-  "window.requestAnimationFrame";
-
 let cb = e => Js.log(e);
-let resetter = _ =>
-  (
-    _ =>
-      (
-        _ => {
-          Js.log("resetting...");
-        }
-      )
-      ->requestAnimationFrame
-  )
-  ->requestAnimationFrame;
 
 [@react.component]
 let make = () => {
-  let (s, d) = React.useState(() => "");
-  let progressBar =
-    <div
-      className={"progress-bar " ++ s}
-      onAnimationIteration={e => e->ReactEvent.Animation.elapsedTime->cb}
-    />;
+  let style =
+    ReactDOMRe.Style.make(
+      ~maxWidth="420px",
+      ~margin="auto",
+      ~marginLeft="1em",
+      (),
+    );
 
-  <div>
-    <div> {React.string("chilled")} </div>
-    <div> <CompUsername /> </div>
-    <div> <PasswordInput /> </div>
-    progressBar
-    <button onClick={_ => {d(s => s == "" ? "running" : "")}}>
-      "Reset progress"->React.string
-    </button>
+  <div style>
+    <p>
+      "Just a simple username and password and you are done!"->React.string
+    </p>
+    <CompUsername />
+    <PasswordInput />
   </div>;
 };
