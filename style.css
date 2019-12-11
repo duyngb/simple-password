@@ -1,14 +1,131 @@
-div.progress-bar {
-    height: 0.3rem;
-    width: 100%;
-    background: blue;
-    transform-origin: 0;
-}
-div.progress-bar.running {
-    animation: scl 5s infinite;
+:root {
+  --r3: 0.375rem;
+  --r5: 0.5rem;
 }
 
+html, body, main {
+  width: 100%; margin: 0;
+  font-family: sans-serif;
+  font-size: 10pt;
+}
+
+body {
+  background-color: rgb(224, 226, 229);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.container-row {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 400px;
+}
+.container {
+  margin: 12px;
+  box-shadow: 0px 4px 16px rgb(200, 200, 200);
+  border-radius: var(--r5);
+}
+.containerTitle {
+  background-color: rgb(242, 243, 245);
+  border-radius: var(--r5) var(--r5) 0px 0px;
+  padding: 12px;
+  font-weight: bold;
+}
+.containerContent {
+  background-color: white;
+  padding: 16px;
+  border-radius: 0px 0px var(--r5) var(--r5);
+}
+
+input { padding: 0.25rem; }
+
+.input-group {
+  display: flex;
+  align-content: center;
+  margin-bottom: 0.5rem;
+}
+.input-group * { transition-duration: 0.2s; }
+.input-group > * {
+  flex-grow: 1;
+  padding: 0.375rem 0.75rem;
+  margin-left: -1px;
+  border: 1px solid gray;
+  border-radius: var(--r3);
+}
+.input-group > .preserved-width { min-width: 6em; }
+.input-group > .append, .input-group > .prepend { flex-shrink: 1; flex-grow: 0; }
+
+:not(.rows) .input-group > *:not(:first-child) { border-top-left-radius: 0; border-bottom-left-radius: 0;}
+:not(.rows) .input-group > *:not(:last-child) { border-top-right-radius: 0; border-bottom-right-radius: 0;}
+
+.input-group input { z-index: 20; }
+.input-group input:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 .2rem rgba(0,123,255,.35);
+  z-index: 30;
+}
+
+.input-group .input-group-row > * { border: none; flex-grow: 1; }
+.input-group-row { padding: 0; display: flex; flex-direction: column; }
+.input-group-row > .progress { position: relative; bottom: 0; }
+
+div.progress { width: 100%; margin-top: -0.2rem; z-index: 31; }
+div.progress-bar { display: flex; align-items: center; height: 100%; }
+div.progress-bar:after {
+  background-color: lightgreen;
+  width: 100%;
+  transform-origin: 0;
+  height: 100%;
+  transition: width 1.6s ease;
+  content: '';}
+div.progress-bar:not([disabled]):after { animation: scl 30s ease-in-out; }
+
+.button:hover, .button[reversed] {background-color: gray; color: whitesmoke;}
+.button[reversed]:hover {background-color: unset; color: unset;}
+
+.reasons { display: flex; flex-direction: column; font-size: 10pt; }
+.reasons .failed { margin: 0.15rem; color: red; animation: pushed-left 0.5s ease-in-out; }
+.reasons .passed { margin: 0.15rem; color: green; }
+
+@keyframes pushed-left {
+  from { transform: translate(2rem, 0); opacity: 0; }
+  to   { transform: translate(0, 0); opacity: 1; }
+}
 @keyframes scl {
-    from { transform: scaleX(1); }
-    to   { transform: scaleX(0); }
+  50% {background-color: yellowgreen;}
+  90% {background-color: red;}
+  to {width: 0;background-color: red;}
+}
+
+@media screen and (min-width: 400px) {
+  html, body { overflow-x: hidden; }
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.5rem;
+}
+.rows .input-group {
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+.rows .input-group:not(:first-of-type) {
+  margin-top: -1px;
+}
+
+.rows > * {
+  border-radius: 0.375rem;
+}
+
+.rows .input-group:not(:first-of-type) > * {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.rows .input-group:not(:last-of-type) > * {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
