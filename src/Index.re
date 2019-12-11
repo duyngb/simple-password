@@ -23,10 +23,12 @@ let makeContainer = text => {
   let content = document##createElement("div");
   content##className #= "containerContent";
 
+  let main = document##getElementById("main");
+
   let () = container##appendChild(title);
   let () = container##appendChild(content);
   let () = containerRow##appendChild(container);
-  let () = document##body##appendChild(containerRow);
+  let () = main##appendChild(containerRow);
 
   content;
 };

@@ -9,7 +9,7 @@ let fontSize = "10pt";
 // This allows us to conveniently write CSS, together with variables, by
 // constructing a string
 let style = {j|
-html, body {
+html, body, main {
   width: 100vw; margin: 0;
   font-family: $fontFamily;
   font-size: $fontSize;
