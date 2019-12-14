@@ -28,4 +28,14 @@ let makeContainer = text => {
 
 ReactDOMRe.render(<Playground />, makeContainer("Playground"));
 
-ReactDOMRe.render(<XPassword />, makeContainer("A Simple Register Form"));
+// ReactDOMRe.render(<XPassword />, makeContainer("A Simple Register Form"));
+
+// let () = {
+//   let a = ['a', 'b', 'b', 'd'];
+//   let b = ['a', 'b', 'c', 'd'];
+//   Js.log3("Checking", a |> Array.of_list, b |> Array.of_list);
+//   Js.log(
+//     MyersDiff.build_graph(a, b, MyersDiff.Empty)
+//     |> MyersDiff.string_of_graph(0),
+//   );
+// };

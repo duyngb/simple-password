@@ -6,7 +6,7 @@ let fxi = (fx, list) =>
   |> Array.of_list
   |> React.array;
 
-let diff = (n, o) => [];
+let diff = (_n, _o) => [];
 
 let rec yankPasted = (newContent, oldContent) => {
   let n = newContent |> Rope.str_to_list |> Rope.rev_utf16_be;
