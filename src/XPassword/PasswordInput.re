@@ -54,6 +54,7 @@ type state = {
   failed: option(string), // current failed rule
   showed: bool, // is this field currently plain text
   iteration: int,
+  disabled: bool,
   timer: bool,
 };
 
@@ -64,6 +65,7 @@ let initState = {
   failed: None,
   showed: false,
   iteration: 0,
+  disabled: false,
   timer: false,
 };
 
@@ -149,6 +151,7 @@ type action =
   | OnChange(string)
   | Respect(int)
   | TimerReset
+  | OnPaste(action => unit)
   | Toggle;
 
 let ruleCheck = state => rules |> (r => r.c(state))->List.map;
@@ -173,6 +176,10 @@ let reducer = (s, action) =>
     {...s, content, passed, failed, iteration, respected};
   | Respect(keyCode) => {...s, respected: Some(keyCode == 70)}
   | TimerReset => initState
+  | OnPaste(dispatcher) =>
+    // This reduce call have side effect!
+    let _ = Js.Global.setTimeout(() => dispatcher(TimerReset), 5000);
+    {...initState, content: s.content, disabled: true};
   | Toggle => {...s, showed: !s.showed, timer: true}
   };
 
@@ -195,6 +202,7 @@ let make = () => {
           minLength=8
           maxLength=25
           value={s.content}
+          disabled={s.disabled}
           onChange={e => e->ReactEvent.Form.target##value->OnChange->d}
           onKeyDown={
             switch (s.respected) {
@@ -202,6 +210,7 @@ let make = () => {
             | _ => (_ => ())
             }
           }
+          onPaste={_ => d->OnPaste->d}
         />
         {s.timer
            ? <Timer
