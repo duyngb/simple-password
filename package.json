@@ -31,6 +31,6 @@
     "bs-platform": "~7.0.0",
     "webpack": "^5.0.0-beta.9",
     "webpack-cli": "~3.3.10",
-    "webpack-dev-server": "~3.9.0"
+    "webpack-dev-server": "^3.11.0"
   }
 }
