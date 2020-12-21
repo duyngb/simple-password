@@ -10,7 +10,7 @@
   },
   "private": true,
   "scripts": {
-    "build": "bsb -make-world",
+    "build": "bsb -make-world && webpack",
     "start": "bsb -make-world -w -ws _ ",
     "clean": "bsb -clean-world",
     "server": "moduleserve ./ --port 8000",
