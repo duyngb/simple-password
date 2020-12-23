@@ -3,7 +3,6 @@ let path = require('path');
 let baseConfig = require('./webpack.config.base');
 
 baseConfig.devServer = {
-  contentBase: path.join(__dirname),
   compress: false,
   port: 9000,
   hot: true,
@@ -15,5 +14,8 @@ baseConfig.devServer = {
 };
 baseConfig.mode = 'development';
 baseConfig.devtool = 'inline-source-map';
+baseConfig.watchOptions = {
+  ignored: ['**/node_modules/**', '**/*.re'],
+};
 
 module.exports = baseConfig;
