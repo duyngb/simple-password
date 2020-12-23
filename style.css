@@ -39,6 +39,7 @@ body {
 }
 
 input { padding: 0.25rem; }
+input:focus { outline: none; }
 
 .input-group {
   display: flex;

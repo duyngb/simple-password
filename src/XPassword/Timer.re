@@ -13,11 +13,11 @@ let (=?=) = (f, default) =>
 /**
  * Animated timer.
  *
- * Simple timer with progress bar, timing by brower's internal
+ * Simple timer with progress bar, timing by browser's internal
  * CSS animation engine!
  *
- * - On timed out, a callback should be triggered (e.g., clear
- *   input text, yay!)
+ * On timed out, a callback should be triggered (e.g., clear
+ * input text, yay!)
  */
 [@react.component]
 let make = (~endProgressCb=?, ~hasToggleBtn=?, ~fs=?, ~fd=?) => {

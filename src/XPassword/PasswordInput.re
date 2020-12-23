@@ -198,6 +198,7 @@ let make = () => {
           type_={s.showed ? "text" : "password"}
           name="password"
           placeholder="Just a simple password..."
+          autoComplete="off"
           required=true
           minLength=8
           maxLength=25

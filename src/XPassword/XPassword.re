@@ -7,7 +7,7 @@ module CompUsername = {
       <label className="prepend preserved-width">
         "Username"->React.string
       </label>
-      <input type_="text" name="username" />
+      <input type_="text" name="username" autoComplete="off" />
     </div>;
   };
 };
