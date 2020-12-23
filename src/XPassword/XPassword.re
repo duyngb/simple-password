@@ -16,19 +16,13 @@ let cb = e => Js.log(e);
 
 [@react.component]
 let make = () => {
-  let style =
-    ReactDOMRe.Style.make(
-      ~maxWidth="420px",
-      ~margin="auto",
-      ~marginLeft="1em",
-      (),
-    );
-
-  <div style>
+  <div className="reg-form">
     <p>
       "Just a simple username and password and you are done!"->React.string
     </p>
-    <CompUsername />
-    <PasswordInput />
+    <div className="rows">
+      <CompUsername />
+      <PasswordInput />
+    </div>
   </div>;
 };

@@ -156,6 +156,12 @@ type action =
 
 let ruleCheck = state => rules |> (r => r.c(state))->List.map;
 
+let keydownHandler = (s, d, e) =>
+  switch (s.respected) {
+  | Some(false) => e->ReactEvent.Keyboard.keyCode->Respect->d
+  | _ => ()
+  };
+
 /** Unified reducer. */
 let reducer = (s, action) =>
   switch (action) {
@@ -188,7 +194,7 @@ let make = () => {
   let (s, d) = React.useReducer(reducer, initState);
   let (timerEnabled, timerSetter) = React.useState(() => false);
 
-  <div className="input-group-rows">
+  <>
     <div className="input-group">
       <label className="prepend preserved-width">
         "Password"->React.string
@@ -205,12 +211,7 @@ let make = () => {
           value={s.content}
           disabled={s.disabled}
           onChange={e => e->ReactEvent.Form.target##value->OnChange->d}
-          onKeyDown={
-            switch (s.respected) {
-            | Some(false) => (e => e->ReactEvent.Keyboard.keyCode->Respect->d)
-            | _ => (_ => ())
-            }
-          }
+          onKeyDown={keydownHandler(s, d)}
           onPaste={_ => d->OnPaste->d}
         />
         {s.timer
@@ -235,19 +236,22 @@ let make = () => {
         <i> "Hint"->React.string </i>
       </button>
     </div>
-    (s->isStateValid ? "You are good to go" : "Opp")->React.string
-    <div className="reasons">
-      {switch (s.failed) {
-       | None => ReasonReact.null
-       | Some(reason) =>
-         <div className="failed" key={s.iteration->string_of_int}>
-           reason->React.string
-         </div>
-       }}
-      {s.passed
-       |> fxi((key, pass) =>
-            <div key className="passed"> pass->React.string </div>
-          )}
-    </div>
-  </div>;
+    {s.iteration == 0
+       ? ReasonReact.null
+       : <div className="input-group">
+           <div className="reasons">
+             {switch (s.failed) {
+              | None => <p> "You are good to go!"->React.string </p>
+              | Some(reason) =>
+                <div className="failed" key={s.iteration->string_of_int}>
+                  reason->React.string
+                </div>
+              }}
+             {s.passed
+              |> fxi((key, pass) =>
+                   <div key className="passed"> pass->React.string </div>
+                 )}
+           </div>
+         </div>}
+  </>;
 };
