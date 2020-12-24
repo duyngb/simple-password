@@ -189,53 +189,79 @@ let reducer = (s, action) =>
   | Toggle => {...s, showed: !s.showed, timer: true}
   };
 
+let onProgressEnd = (stateReducer, timerSetter, _) => {
+  timerSetter(_ => false);
+  stateReducer(TimerReset);
+};
+
+let enableTimer = (stateReducer, timerSetter, _) => {
+  timerSetter(_ => true);
+  stateReducer(Toggle);
+};
+
+module Timer = {
+  /**
+   * Animated timer.
+   *
+   * Simple timer with progress bar, timing by browser's internal
+   * CSS animation engine!
+   *
+   * On timed out, a callback should be triggered (e.g., clear
+   * input text, yay!)
+   */
+  [@react.component]
+  let make = (~fs, ~endProgressCb=?) => {
+    let onAnimationEnd =
+      switch (endProgressCb) {
+      | None => (_ => ())
+      | Some(fn) => fn
+      };
+
+    <div className="progress">
+      <div className="progress-bar" disabled={!fs} onAnimationEnd />
+    </div>;
+  };
+};
+
 [@react.component]
 let make = () => {
   let (s, d) = React.useReducer(reducer, initState);
-  let (timerEnabled, timerSetter) = React.useState(() => false);
+  let (timer, timerSetter) = React.useState(() => false);
 
   <>
     <div className="input-group">
       <label className="prepend preserved-width">
         "Password"->React.string
       </label>
-      <div className="input-group-row">
-        <input
-          type_={s.showed ? "text" : "password"}
-          name="password"
-          placeholder="Just a simple password..."
-          autoComplete="off"
-          required=true
-          minLength=8
-          maxLength=25
-          value={s.content}
-          disabled={s.disabled}
-          onChange={e => e->ReactEvent.Form.target##value->OnChange->d}
-          onKeyDown={keydownHandler(s, d)}
-          onPaste={_ => d->OnPaste->d}
-        />
-        {s.timer
-           ? <Timer
-               endProgressCb={_ => {
-                 Js.log("animation ended");
-                 timerSetter(_ => false);
-                 d(TimerReset);
-               }}
-               fs=timerEnabled
-               fd=timerSetter
-             />
-           : ReasonReact.null}
-      </div>
-      <button
-        className="append button"
-        reversed={s.showed}
-        onClick={_ => {
-          timerSetter(_ => true);
-          d(Toggle);
-        }}>
-        <i> "Hint"->React.string </i>
-      </button>
+      <input
+        type_={s.showed ? "text" : "password"}
+        name="password"
+        placeholder={s.disabled ? "You...?" : "Just a simple password..."}
+        autoComplete="off"
+        required=true
+        minLength=8
+        maxLength=25
+        value={s.content}
+        disabled={s.disabled}
+        onChange={e => e->ReactEvent.Form.target##value->OnChange->d}
+        onKeyDown={keydownHandler(s, d)}
+        onPaste={_ => d->OnPaste->d}
+      />
+      {s.iteration == 0
+         ? React.null
+         : <button
+             className="append button"
+             reversed={s.showed}
+             onClick={enableTimer(d, timerSetter)}>
+             <i> "Hint"->React.string </i>
+           </button>}
     </div>
+    {s.timer
+       ? <div className="input-group">
+           <div className="prepend preserved-width" />
+           <Timer endProgressCb={onProgressEnd(d, timerSetter)} fs=timer />
+         </div>
+       : React.null}
     {s.iteration == 0
        ? ReasonReact.null
        : <div className="input-group">
