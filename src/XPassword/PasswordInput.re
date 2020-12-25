@@ -53,8 +53,8 @@ type state = {
   passed: list(string), // passed rules
   failed: option(string), // current failed rule
   showed: bool, // is this field currently plain text
-  iteration: int,
-  disabled: bool,
+  iteration: int, // used to assign unique index for each error message, prevent unnecessary repaint
+  disabled: bool, // For some special circumstance, this input field is disabled
   timer: bool,
 };
 
@@ -78,7 +78,8 @@ let isStateValid = s => s.respected == Some(true) && s.failed == None;
  */
 type rule = {
   c: state => bool, // State checker function
-  r: string // Failed reason
+  r: string, // Failed reason
+  d: option(state => state) // optional state reducer
 };
 
 let ($) = (f, g, x) => f(x) |> g;
@@ -93,30 +94,37 @@ let rules: list(rule) = [
   {
     c: s => String.length(s.content) >= 8,
     r: "Password must be at least 8 characters.",
+    d: None,
   },
   {
     c: stc $ strCheck(ch => ch >= 'A' && ch <= 'Z'),
     r: "Password must contain at least one common Latin uppercase letter.",
+    d: None,
   },
   {
     c: stc $ strCheck(ch => ch >= '0' && ch <= '9'),
     r: "Password must contain at least one Latin number.",
+    d: None,
   },
   {
     c: stc $ strCheck(isSpecialChar),
     r: "Password must contain at least one special character found on US keyboard.",
+    d: None,
   },
   {
     c: stc $ repetitiveChecker(None),
     r: "Password must not contain repetitive pattern.",
+    d: None,
   },
   {
     c: stc $ String.contains(_, 'q'),
     r: "Password must contain character 'q' (lowercase).",
+    d: None,
   },
   {
     c: stc $ String.contains(_, 'x'),
     r: "Password must contain character 'x' (lowercase).",
+    d: None,
   },
   {
     c: st =>
@@ -125,16 +133,21 @@ let rules: list(rule) = [
       | Some(respected) => respected
       },
     r: "Press F to pay respect!",
+    d: Some(s => s.respected == None ? {...s, respected: Some(false)} : s),
   },
-  {c: stc $ isHasEmoji, r: "Must have one emoji."},
-  {c: stc $ emoPointer, r: "Must point left or right, but not up or down."},
+  // New Windows update makes it extremely infuriated to enter emoji in a
+  // password field. Let's try this!
+  {c: stc $ isHasEmoji, r: "Must have one emoji.", d: None},
+  {c: stc $ emoPointer, r: "Must point left or right.", d: None},
   {
     c: stc $ strCheck(ch => ch == ' ') $ (!),
     r: "Space is not allowed in password (for an obvious security reason).",
+    d: None,
   },
   {
     c: s => String.length(s.content) <= 14,
     r: "Password must be at most 14 characters.",
+    d: None,
   },
 ];
 
@@ -142,9 +155,14 @@ let rules: list(rule) = [
 let rec ruleSplit = (a, allPassed) =>
   switch (a) {
   | [] => (allPassed, None) // All true
-  | [(false, rule), ..._] => (allPassed, Some(rule.r))
+  | [(false, rule), ..._] => (allPassed, Some(rule))
   | [(true, rule), ...rest] => ruleSplit(rest, [rule.r, ...allPassed])
   };
+
+let ruleReasons = List.map(rule => rule.r);
+
+let findFailed = state =>
+  List.map(r => r.c(state), rules)->List.combine(rules)->ruleSplit([]);
 
 /** Available actions. */
 type action =
@@ -154,33 +172,38 @@ type action =
   | OnPaste(action => unit)
   | Toggle;
 
-let ruleCheck = state => rules |> (r => r.c(state))->List.map;
-
 let keydownHandler = (s, d, e) =>
   switch (s.respected) {
-  | Some(false) => e->ReactEvent.Keyboard.keyCode->Respect->d
+  | Some(false) =>
+    e->ReactEvent.Keyboard.preventDefault;
+    e->ReactEvent.Keyboard.keyCode->Respect->d;
   | _ => ()
   };
+
+let stateCheck = (s, content) => {
+  let (passed, failed) = {...s, content}->findFailed;
+  let tmp_state = {
+    ...s,
+    content: s.respected == Some(false) ? s.content : content,
+    passed,
+  };
+  switch (failed) {
+  | None => {...tmp_state, failed: None}
+  | Some(rule) =>
+    let iteration = Some(rule.r) != s.failed ? s.iteration + 1 : s.iteration;
+    switch (rule.d) {
+    | None => {...tmp_state, iteration, failed: Some(rule.r)}
+    | Some(fn) => fn({...tmp_state, iteration, failed: Some(rule.r)})
+    };
+  };
+};
 
 /** Unified reducer. */
 let reducer = (s, action) =>
   switch (action) {
-  | OnChange(content) =>
-    let (passed, failed) =
-      {...s, content}->ruleCheck->List.combine(rules)->ruleSplit([]);
-    let iteration = failed != s.failed ? s.iteration + 1 : s.iteration;
-    // Enable key hook when it's required to pay respect, otherwise, keep it.
-    let (respected, content) =
-      switch (failed, s.respected) {
-      | (Some("Press F to pay respect!"), None) => (Some(false), content)
-      | (Some("Press F to pay respect!"), Some(r)) => (
-          Some(r),
-          String.sub(content, 0, String.length(content) - 1),
-        )
-      | (_, r) => (r, content)
-      };
-    {...s, content, passed, failed, iteration, respected};
-  | Respect(keyCode) => {...s, respected: Some(keyCode == 70)}
+  | OnChange(content) => stateCheck(s, content)
+  | Respect(keyCode) =>
+    stateCheck({...s, respected: Some(keyCode == 70)}, s.content)
   | TimerReset => initState
   | OnPaste(dispatcher) =>
     // This reduce call have side effect!
