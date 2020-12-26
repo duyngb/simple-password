@@ -71,6 +71,10 @@ let initState = {
 
 let isStateValid = s => s.respected == Some(true) && s.failed == None;
 
+type rule_type =
+  | Normal
+  | ShowOnFailed;
+
 /**
  * Rule type.
  *
@@ -79,7 +83,8 @@ let isStateValid = s => s.respected == Some(true) && s.failed == None;
 type rule = {
   c: state => bool, // State checker function
   r: string, // Failed reason
-  d: option(state => state) // optional state reducer
+  d: option(state => state), // optional state reducer
+  t: rule_type,
 };
 
 let ($) = (f, g, x) => f(x) |> g;
@@ -95,36 +100,43 @@ let rules: list(rule) = [
     c: s => String.length(s.content) >= 8,
     r: "Password must be at least 8 characters.",
     d: None,
+    t: Normal,
   },
   {
     c: stc $ strCheck(ch => ch >= 'A' && ch <= 'Z'),
     r: "Password must contain at least one common Latin uppercase letter.",
     d: None,
+    t: Normal,
   },
   {
     c: stc $ strCheck(ch => ch >= '0' && ch <= '9'),
     r: "Password must contain at least one Latin number.",
     d: None,
+    t: Normal,
   },
   {
     c: stc $ strCheck(isSpecialChar),
     r: "Password must contain at least one special character found on US keyboard.",
     d: None,
+    t: Normal,
   },
   {
     c: stc $ repetitiveChecker(None),
     r: "Password must not contain repetitive pattern.",
     d: None,
+    t: Normal,
   },
   {
     c: stc $ String.contains(_, 'q'),
     r: "Password must contain character 'q' (lowercase).",
     d: None,
+    t: Normal,
   },
   {
     c: stc $ String.contains(_, 'x'),
     r: "Password must contain character 'x' (lowercase).",
     d: None,
+    t: Normal,
   },
   {
     c: st =>
@@ -134,20 +146,23 @@ let rules: list(rule) = [
       },
     r: "Press F to pay respect!",
     d: Some(s => s.respected == None ? {...s, respected: Some(false)} : s),
+    t: ShowOnFailed,
   },
   // New Windows update makes it extremely infuriated to enter emoji in a
   // password field. Let's try this!
-  {c: stc $ isHasEmoji, r: "Must have one emoji.", d: None},
-  {c: stc $ emoPointer, r: "Must point left or right.", d: None},
+  {c: stc $ isHasEmoji, r: "Must have one emoji.", d: None, t: Normal},
+  {c: stc $ emoPointer, r: "Must point left or right.", d: None, t: Normal},
   {
     c: stc $ strCheck(ch => ch == ' ') $ (!),
     r: "Space is not allowed in password (for an obvious security reason).",
     d: None,
+    t: ShowOnFailed,
   },
   {
     c: s => String.length(s.content) <= 14,
     r: "Password must be at most 14 characters.",
     d: None,
+    t: Normal,
   },
 ];
 
@@ -156,7 +171,11 @@ let rec ruleSplit = (a, allPassed) =>
   switch (a) {
   | [] => (allPassed, None) // All true
   | [(false, rule), ..._] => (allPassed, Some(rule))
-  | [(true, rule), ...rest] => ruleSplit(rest, [rule.r, ...allPassed])
+  | [(true, rule), ...rest] =>
+    switch (rule.t) {
+    | ShowOnFailed => ruleSplit(rest, allPassed)
+    | Normal => ruleSplit(rest, [rule.r, ...allPassed])
+    }
   };
 
 let ruleReasons = List.map(rule => rule.r);
