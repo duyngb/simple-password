@@ -30,5 +30,5 @@ let makeContainer = text => {
 ReactDOMRe.render(
   <XPassword>
   </XPassword>,
-  makeContainer("X-Password"),
+  makeContainer("New Identity"),
 );

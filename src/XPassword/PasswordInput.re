@@ -15,14 +15,14 @@ let isSpecialChar = ch =>
   | _ => false
   };
 
-let rec repetitiveChecker = (lastChar, s) =>
+let rec repetitiveChecker = (s, lastChar) =>
   switch (lastChar, s) {
   | (_, "") => true
-  | (None, s) => repetitiveChecker(Some(s.[0]), tail(s))
+  | (None, s) => repetitiveChecker(tail(s), Some(s.[0]))
   | (Some(c), s) =>
     let hd = s.[0];
     let tl = tail(s);
-    c == hd ? false : repetitiveChecker(Some(hd), tl);
+    c == hd ? false : repetitiveChecker(tl, Some(hd));
   };
 
 /** Check if this string has emoji or not. */
@@ -49,8 +49,8 @@ let emoPointer = (s: string) =>
 /** Unified password field state. */
 type state = {
   content: string, // password content
-  respected: option(bool), // Did someone respected? If None, do not check for keydown
-  passed: list(string), // passed rules
+  respected: option(bool), // If None, do not check for keydown
+  passed: list(string), // passed rules' text
   failed: option(string), // current failed rule
   showed: bool, // is this field currently plain text
   iteration: int, // used to assign unique index for each error message, prevent unnecessary repaint
@@ -87,11 +87,8 @@ type rule = {
   t: rule_type,
 };
 
-let ($) = (f, g, x) => f(x) |> g;
-let stc = s => s.content;
-
 /** Check for condition defined in predicate over each character of string. */
-let strCheck = (predicate: char => bool, s: string) =>
+let strCheck = (s: string, predicate: char => bool) =>
   s |> String.map(ch => predicate(ch) ? 'o' : 'x') |> String.contains(_, 'o');
 
 /** Predefined rules. */
@@ -103,37 +100,37 @@ let rules: list(rule) = [
     t: Normal,
   },
   {
-    c: stc $ strCheck(ch => ch >= 'A' && ch <= 'Z'),
+    c: s => strCheck(s.content, ch => ch >= 'A' && ch <= 'Z'),
     r: "Password must contain at least one common Latin uppercase letter.",
     d: None,
     t: Normal,
   },
   {
-    c: stc $ strCheck(ch => ch >= '0' && ch <= '9'),
+    c: s => strCheck(s.content, ch => ch >= '0' && ch <= '9'),
     r: "Password must contain at least one Latin number.",
     d: None,
     t: Normal,
   },
   {
-    c: stc $ strCheck(isSpecialChar),
+    c: s => strCheck(s.content, isSpecialChar),
     r: "Password must contain at least one special character found on US keyboard.",
     d: None,
     t: Normal,
   },
   {
-    c: stc $ repetitiveChecker(None),
+    c: s => repetitiveChecker(s.content, None),
     r: "Password must not contain repetitive pattern.",
     d: None,
     t: Normal,
   },
   {
-    c: stc $ String.contains(_, 'q'),
+    c: s => String.contains(s.content, 'q'),
     r: "Password must contain character 'q' (lowercase).",
     d: None,
     t: Normal,
   },
   {
-    c: stc $ String.contains(_, 'x'),
+    c: s => String.contains(s.content, 'x'),
     r: "Password must contain character 'x' (lowercase).",
     d: None,
     t: Normal,
@@ -150,10 +147,20 @@ let rules: list(rule) = [
   },
   // New Windows update makes it extremely infuriated to enter emoji in a
   // password field. Let's try this!
-  {c: stc $ isHasEmoji, r: "Must have one emoji.", d: None, t: Normal},
-  {c: stc $ emoPointer, r: "Must point left or right.", d: None, t: Normal},
   {
-    c: stc $ strCheck(ch => ch == ' ') $ (!),
+    c: s => isHasEmoji(s.content),
+    r: "Must have one emoji.",
+    d: None,
+    t: Normal,
+  },
+  {
+    c: s => emoPointer(s.content),
+    r: "Must point left or right.",
+    d: None,
+    t: Normal,
+  },
+  {
+    c: s => !String.contains(s.content, ' '),
     r: "Space is not allowed in password (for an obvious security reason).",
     d: None,
     t: ShowOnFailed,
