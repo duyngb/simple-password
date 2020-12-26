@@ -273,7 +273,7 @@ module Timer = {
 };
 
 [@react.component]
-let make = () => {
+let make = (~passSetter) => {
   let (s, d) = React.useReducer(reducer, initState);
   let (timer, timerSetter) = React.useState(() => false);
 
@@ -316,7 +316,9 @@ let make = () => {
        : <div className="input-group">
            <div className="reasons">
              {switch (s.failed) {
-              | None => <p> "You are good to go!"->React.string </p>
+              | None =>
+                passSetter(_ => true);
+                <p> "You are good to go!"->React.string </p>;
               | Some(reason) =>
                 <div className="failed" key={s.iteration->string_of_int}>
                   reason->React.string
