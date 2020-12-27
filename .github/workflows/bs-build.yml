@@ -22,13 +22,13 @@ jobs:
       - name: Build artifacts
         run: |
           npx bsb -make-world
-          npx webpack -c webpack.config.js -o page
+          npx webpack -c webpack.config.js -o docs
       - name: Publish changes
         run: |
           git config user.name  "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-          git add page
+          git add docs
           git commit -m "Update page content
           
           Auto-build from GithubAction
