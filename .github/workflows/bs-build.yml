@@ -7,6 +7,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+          clean: false
+          ref: gh-pages
+      - name: Prepare build tree
+        run: |
+          git config user.name  $GITHUB_ACTOR
+          git config user.email $GITHUB_ACTOR@users.noreply.github.com
+          git config committer.name  github-actions[bot]
+          git config committer.email 41898282+github-actions[bot]@users.noreply.github.com
+
+          git merge --allow-unrelated-histories -s recursive -X theirs $GITHUB_SHA
       - uses: actions/setup-node@v2
         with:
           node-version: '12'
@@ -22,18 +34,12 @@ jobs:
         run: |
           npx bsb -make-world
           npx webpack -c webpack.config.js -o docs
-      - run: git stash
-      - uses: actions/checkout@v2
-        with:
-          clean: false
-          ref: gh-pages
       - name: Publish changes
         run: |
-          git config user.name  github-actions
-          git config user.email github-actions@@users.noreply.github.com
-
           git add docs
           git commit -m "Update page content
-          
-          Auto-build from GithubAction
-          $GITHUB_RUN_ID" && git push || true
+
+          ------------
+          Github Action run id: $GITHUB_RUN_ID
+          Built from: $GITHUB_SHA
+          " --amend && git push || true
