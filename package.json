@@ -6,8 +6,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "github.com/duyngb/reasonml-funny-password"
+    "url": "https://github.com/duyngb/simple-password.git"
   },
+  "homepage": "https://duyngb.github.io/simple-password",
   "private": true,
   "scripts": {
     "build": "bsb -make-world && webpack",
