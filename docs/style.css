@@ -117,3 +117,5 @@ input::-ms-reveal, input::-ms-clear { display: none; }
 .rows .input-group:first-of-type > :last-child {border-top-right-radius: var(--r3);}
 .rows .input-group:last-of-type > :first-child {border-bottom-left-radius: var(--r3);}
 .rows .input-group:last-of-type > :last-child {border-bottom-right-radius: var(--r3);}
+
+footer { width: 100%; text-align: center; opacity: 0.75; }
