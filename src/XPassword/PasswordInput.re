@@ -94,6 +94,12 @@ let strCheck = (s: string, predicate: char => bool) =>
 /** Predefined rules. */
 let rules: list(rule) = [
   {
+    c: _ => true,
+    r: "Please fill out your identity slowly.",
+    d: Some(s => {...s, disabled: true, content: ""}),
+    t: ShowOnFailed,
+  },
+  {
     c: s => String.length(s.content) >= 8,
     r: "Password must be at least 8 characters.",
     d: None,
@@ -187,15 +193,24 @@ let rec ruleSplit = (a, allPassed) =>
 
 let ruleReasons = List.map(rule => rule.r);
 
-let findFailed = state =>
-  List.map(r => r.c(state), rules)->List.combine(rules)->ruleSplit([]);
+let findFailed = (state: state, content: string) => {
+  let d = abs(content->String.length - state.content->String.length);
+  switch (d) {
+  // 4 is sufficient for a decent emoji...
+  | _ when d > 4 => ([], Some(rules->List.hd))
+  | _ =>
+    List.map(r => r.c({...state, content}), rules)
+    ->List.combine(rules)
+    ->ruleSplit([])
+  };
+};
 
 /** Available actions. */
 type action =
   | OnChange(string)
   | Respect(int)
   | TimerReset
-  | OnPaste(action => unit)
+  | OnPaste(unit => unit)
   | Toggle;
 
 let keydownHandler = (s, d, e) =>
@@ -207,7 +222,7 @@ let keydownHandler = (s, d, e) =>
   };
 
 let stateCheck = (s, content) => {
-  let (passed, failed) = {...s, content}->findFailed;
+  let (passed, failed) = findFailed(s, content);
   let tmp_state = {
     ...s,
     content: s.respected == Some(false) ? s.content : content,
@@ -231,10 +246,10 @@ let reducer = (s, action) =>
   | Respect(keyCode) =>
     stateCheck({...s, respected: Some(keyCode == 70)}, s.content)
   | TimerReset => initState
-  | OnPaste(dispatcher) =>
+  | OnPaste(cb) =>
     // This reduce call have side effect!
-    let _ = Js.Global.setTimeout(() => dispatcher(TimerReset), 5000);
-    {...initState, content: s.content, disabled: true};
+    let _ = Js.Global.setTimeout(cb, 5000);
+    {...s, disabled: true, passed: [], failed: Some(rules->List.hd.r)};
   | Toggle => {...s, showed: !s.showed, timer: true}
   };
 
@@ -273,7 +288,7 @@ module Timer = {
 };
 
 [@react.component]
-let make = (~passSetter) => {
+let make = (~passSetter, ~showFailed=true) => {
   let (s, d) = React.useReducer(reducer, initState);
   let (timer, timerSetter) = React.useState(() => false);
 
@@ -283,10 +298,9 @@ let make = (~passSetter) => {
         "Password"->React.string
       </label>
       <input
-        type_={s.showed ? "text" : "password"}
-        name="password"
-        placeholder={s.disabled ? "You...?" : "Just a simple password..."}
-        autoComplete="off"
+        type_="password"
+        placeholder="Just a simple password..."
+        autoComplete="new-password"
         required=true
         minLength=8
         maxLength=25
@@ -294,9 +308,9 @@ let make = (~passSetter) => {
         disabled={s.disabled}
         onChange={e => e->ReactEvent.Form.target##value->OnChange->d}
         onKeyDown={keydownHandler(s, d)}
-        onPaste={_ => d->OnPaste->d}
+        onPaste={_ => OnPaste(() => TimerReset->d)->d}
       />
-      {s.iteration == 0
+      {s.iteration == 0 && showFailed
          ? React.null
          : <button
              className="append button"
@@ -311,7 +325,7 @@ let make = (~passSetter) => {
            <Timer endProgressCb={onProgressEnd(d, timerSetter)} fs=timer />
          </div>
        : React.null}
-    {s.iteration == 0
+    {s.iteration == 0 && showFailed
        ? ReasonReact.null
        : <div className="input-group">
            <div className="reasons">

@@ -49,7 +49,7 @@ let make = () => {
     <p>
       {switch (s) {
        | OnUserName => "Please choose a name for your eternity"
-       | OnPassword => "Just another simple field and you are done!"
+       | OnPassword => "Please prove yourself"
        | FinalStage => "That is. What a day!"
        }}
       ->React.string
