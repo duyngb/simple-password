@@ -309,6 +309,7 @@ let make = (~passSetter, ~showFailed=true) => {
         onChange={e => e->ReactEvent.Form.target##value->OnChange->d}
         onKeyDown={keydownHandler(s, d)}
         onPaste={_ => OnPaste(() => TimerReset->d)->d}
+        onDrop={e => e->ReactEvent.Mouse.preventDefault}
       />
       {s.iteration == 0 && showFailed
          ? React.null
