@@ -290,7 +290,7 @@ module Timer = {
 };
 
 [@react.component]
-let make = (~passSetter, ~showFailed=true) => {
+let make = (~disabled, ~onContent=(_, _) => ()) => {
   let (s, d) = React.useReducer(reducer, initState);
   let (timer, timerSetter) = React.useState(() => false);
 
@@ -307,7 +307,7 @@ let make = (~passSetter, ~showFailed=true) => {
         minLength=8
         maxLength=25
         value={s.content}
-        disabled={s.disabled}
+        disabled={disabled || s.disabled}
         onChange={e => e->ReactEvent.Form.target##value->OnChange->d}
         onKeyDown={keydownHandler(s, d)}
         onPaste={_ => OnPaste(() => TimerReset->d)->d}
@@ -328,14 +328,12 @@ let make = (~passSetter, ~showFailed=true) => {
            <Timer endProgressCb={onProgressEnd(d, timerSetter)} fs=timer />
          </div>
        : React.null}
-    {s.iteration == 0 && showFailed
+    {s.iteration == 0
        ? ReasonReact.null
        : <div className="input-group">
            <div className="reasons">
              {switch (s.failed) {
-              | None =>
-                passSetter(_ => true);
-                <p> "You are good to go!"->React.string </p>;
+              | None => <p> "You are good to go!"->React.string </p>
               | Some(reason) =>
                 <div className="failed" key={s.iteration->string_of_int}>
                   reason->React.string
