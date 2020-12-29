@@ -95,7 +95,7 @@ let strCheck = (s: string, predicate: char => bool) =>
 let rules: list(rule) = [
   {
     c: _ => true,
-    r: "Please fill out your identity slowly.",
+    r: "Please fill in your identity slowly.",
     d: Some(s => {...s, disabled: true, content: ""}),
     t: ShowOnFailed,
   },
@@ -194,10 +194,12 @@ let rec ruleSplit = (a, allPassed) =>
 let ruleReasons = List.map(rule => rule.r);
 
 let findFailed = (state: state, content: string) => {
-  let d = abs(content->String.length - state.content->String.length);
-  switch (d) {
+  let l1 = state.content->String.length;
+  let l2 = content->String.length;
+  let d = abs(l1 - l2);
+  switch () {
   // 4 is sufficient for a decent emoji...
-  | _ when d > 4 => ([], Some(rules->List.hd))
+  | _ when l2 > 2 && d > 4 => ([], Some(rules->List.hd))
   | _ =>
     List.map(r => r.c({...state, content}), rules)
     ->List.combine(rules)
@@ -311,7 +313,7 @@ let make = (~passSetter, ~showFailed=true) => {
         onPaste={_ => OnPaste(() => TimerReset->d)->d}
         onDrop={e => e->ReactEvent.Mouse.preventDefault}
       />
-      {s.iteration == 0 && showFailed
+      {s.iteration == 0 || s.disabled
          ? React.null
          : <button
              className="append button"
