@@ -70,7 +70,7 @@ let stateCheck = (s, content) => {
   let tmp_state = {
     ...s,
     content: s.respected == Some(false) ? s.content : content,
-    passed,
+    passed: passed->List.rev,
   };
   switch (failed) {
   | None => {...tmp_state, failed: None}
@@ -187,6 +187,10 @@ let make = (~disabled, ~onContent=(_, _) => ()) => {
        ? ReasonReact.null
        : <div className="input-group">
            <div className="reasons">
+             {s.passed
+              |> fxi((key, pass) =>
+                   <div key className="passed"> pass->React.string </div>
+                 )}
              {switch (s.failed) {
               | None => <p> "You are good to go!"->React.string </p>
               | Some(reason) =>
@@ -194,10 +198,6 @@ let make = (~disabled, ~onContent=(_, _) => ()) => {
                   reason->React.string
                 </div>
               }}
-             {s.passed
-              |> fxi((key, pass) =>
-                   <div key className="passed"> pass->React.string </div>
-                 )}
            </div>
          </div>}
   </>;
