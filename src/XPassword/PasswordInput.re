@@ -209,7 +209,7 @@ let findFailed = (state: state, content: string) => {
 
 /** Available actions. */
 type action =
-  | OnChange(string)
+  | OnChange(string, (string, bool) => unit)
   | Respect(int)
   | TimerReset
   | OnPaste(unit => unit)
@@ -244,7 +244,10 @@ let stateCheck = (s, content) => {
 /** Unified reducer. */
 let reducer = (s, action) =>
   switch (action) {
-  | OnChange(content) => stateCheck(s, content)
+  | OnChange(content, onContent) =>
+    let state = stateCheck(s, content);
+    onContent(state.content, state.failed == None);
+    state;
   | Respect(keyCode) =>
     stateCheck({...s, respected: Some(keyCode == 70)}, s.content)
   | TimerReset => initState
@@ -294,6 +297,22 @@ let make = (~disabled, ~onContent=(_, _) => ()) => {
   let (s, d) = React.useReducer(reducer, initState);
   let (timer, timerSetter) = React.useState(() => false);
 
+  // These are used to skip first render of "onContent" changing
+  // from upper component.
+  let (cCb, setCb) = React.useState(((), _, _) => ());
+  let firstRender = React.useRef(true);
+  React.useEffect1(
+    () => {
+      if (firstRender.current) {
+        firstRender.current = false;
+      } else {
+        setCb(_ => onContent);
+      };
+      None;
+    },
+    [|onContent|],
+  );
+
   <>
     <div className="input-group">
       <label className="prepend preserved-width">
@@ -308,7 +327,7 @@ let make = (~disabled, ~onContent=(_, _) => ()) => {
         maxLength=25
         value={s.content}
         disabled={disabled || s.disabled}
-        onChange={e => e->ReactEvent.Form.target##value->OnChange->d}
+        onChange={e => OnChange(ReactEvent.Form.target(e)##value, cCb)->d}
         onKeyDown={keydownHandler(s, d)}
         onPaste={_ => OnPaste(() => TimerReset->d)->d}
         onDrop={e => e->ReactEvent.Mouse.preventDefault}
