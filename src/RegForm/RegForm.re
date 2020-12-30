@@ -46,35 +46,6 @@ let stateValid = s =>
   | FinalStage => true
   };
 
-module CompUsername = {
-  let onChange = (onContent, e: ReactEvent.Form.t) => {
-    let value: string = e->ReactEvent.Form.target##value;
-    let check =
-      String.length(value) >= 5
-      && !String.contains(value, ' ')
-      && PasswordInput.strCheck(value, c => !PasswordInput.isSpecialChar(c));
-    onContent(value, check);
-  };
-
-  [@react.component]
-  let make = (~disabled, ~onContent=(_, _) => ()) => {
-    <div className="input-group">
-      <label className="prepend preserved-width">
-        "Username"->React.string
-      </label>
-      <input
-        type_="text"
-        name="username"
-        autoComplete="off"
-        required=true
-        placeholder="This would be permanent"
-        onChange={onChange(onContent)}
-        disabled
-      />
-    </div>;
-  };
-};
-
 /** Should component render? */
 let r = (condition, element) => condition ? element : React.null;
 
@@ -92,7 +63,7 @@ let make = () => {
       ->React.string
     </p>
     <div className="rows">
-      <CompUsername
+      <UsernameInput
         disabled={s.stage != OnUserName}
         onContent={(c, v) => UsrContent(c, v)->d}
       />

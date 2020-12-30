@@ -26,9 +26,4 @@ let makeContainer = text => {
   content;
 };
 
-
-ReactDOMRe.render(
-  <XPassword>
-  </XPassword>,
-  makeContainer("New Identity"),
-);
+ReactDOMRe.render(<RegForm />, makeContainer("Registering..."));
