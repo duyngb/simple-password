@@ -22,9 +22,18 @@ body {
   align-items: center;
 }
 .container-row {
-  width: 42rem;
+  width: 42em;
   margin: 2.4em auto auto;
 }
+@media screen and (max-width: 36em) {
+  .container-row {
+    width: unset;
+    min-width: 24em;
+    margin-left: unset;
+    margin-right: unset;
+  }
+}
+
 .container {
   margin: 1em;
   box-shadow: 0px 4px 16px rgb(200, 200, 200);
@@ -119,3 +128,10 @@ input::-ms-reveal, input::-ms-clear { display: none; }
 .rows .input-group:last-of-type > :last-child {border-bottom-right-radius: var(--r3);}
 
 footer { width: 100%; text-align: center; opacity: 0.75; }
+.button.danger {
+  background-color: lightcoral;
+}
+.button.danger:not([disabled]):hover {
+  background-color: crimson;
+  color:whitesmoke;
+}

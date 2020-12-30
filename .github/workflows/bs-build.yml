@@ -13,10 +13,8 @@ jobs:
           ref: gh-pages
       - name: Prepare build tree
         run: |
-          git config user.name  $GITHUB_ACTOR
-          git config user.email $GITHUB_ACTOR@users.noreply.github.com
-          git config committer.name  github-actions[bot]
-          git config committer.email 41898282+github-actions[bot]@users.noreply.github.com
+          git config user.name  github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
 
           git merge --allow-unrelated-histories -s recursive -X theirs $GITHUB_SHA
       - uses: actions/setup-node@v2
@@ -37,9 +35,9 @@ jobs:
       - name: Publish changes
         run: |
           git add docs
-          git commit -m "Update page content
+          git commit -m "
+          Update gh-pages [action $GITHUB_RUN_ID]
 
-          ------------
-          Github Action run id: $GITHUB_RUN_ID
+          ------------------------ 8< ------------------------
           Built from: $GITHUB_SHA
           " --amend && git push || true
