@@ -129,7 +129,7 @@ module Timer = {
 };
 
 [@react.component]
-let make = (~disabled, ~onContent=(_, _) => ()) => {
+let make = (~disabled=false, ~name="password", ~onContent=(_, _) => ()) => {
   let (s, d) = React.useReducer(reducer, initState);
   let (timer, timerSetter) = React.useState(() => false);
 
@@ -155,6 +155,7 @@ let make = (~disabled, ~onContent=(_, _) => ()) => {
         "Password"->React.string
       </label>
       <input
+        name
         type_="password"
         placeholder="Just a simple password..."
         autoComplete="new-password"
