@@ -37,7 +37,11 @@ let reducer = (s, a) => {
       | OnPassword2 => FinalStage
       | FinalStage => FinalStage
       };
-    {...s, stage};
+    if (stage == s.stage) {
+      {...initState, key: s.key + 1};
+    } else {
+      {...s, stage};
+    };
   | UsrContent(_username, uservalid) => {...s, uservalid}
   | Content1(_content1, c1valid) => {...s, c1valid}
   | Content2(_content2, c2valid) => {...s, c2valid}
@@ -99,7 +103,7 @@ let make = () => {
            | OnUserName => "I accept the risk"
            | OnPassword => "I'm done"
            | OnPassword2 => "I'm done"
-           | FinalStage => ""
+           | FinalStage => "What a day!"
            }}
           ->React.string
         </button>
