@@ -55,6 +55,7 @@ type action =
   | Respect(int)
   | TimerReset
   | OnPaste(unit => unit)
+  | OnDisabledSet(bool)
   | Toggle;
 
 let keydownHandler = (s, d, e) =>
@@ -96,7 +97,15 @@ let reducer = (s, action) =>
   | OnPaste(cb) =>
     // This reduce call have side effect!
     let _ = Js.Global.setTimeout(cb, 5000);
-    {...s, disabled: true, passed: [], failed: Some(rules->List.hd.r)};
+    {
+      ...s,
+      disabled: true,
+      passed: [],
+      failed: Some(rules->List.hd.r),
+      // increase iteration to display error on initial paste
+      iteration: s.iteration + 1,
+    };
+  | OnDisabledSet(disabled) => {...initState, content: s.content, disabled}
   | Toggle => {...s, showed: !s.showed, timer: true}
   };
 
@@ -133,6 +142,16 @@ let make = (~disabled=false, ~name="password", ~onContent=(_, _) => ()) => {
   let (s, d) = React.useReducer(reducer, initState);
   let (timer, timerSetter) = React.useState(() => false);
 
+  // disabled props changes is a signal on stage changed;
+  // timer should be cancled on stage progress, too
+  React.useEffect1(
+    () => {
+      OnDisabledSet(disabled)->d;
+      None;
+    },
+    [|disabled|],
+  );
+
   // These are used to skip first render of "onContent" changing
   // from upper component.
   let (cCb, setCb) = React.useState(((), _, _) => ());
@@ -163,13 +182,13 @@ let make = (~disabled=false, ~name="password", ~onContent=(_, _) => ()) => {
         minLength=8
         maxLength=25
         value={s.content}
-        disabled={disabled || s.disabled}
+        disabled={s.disabled}
         onChange={e => OnChange(ReactEvent.Form.target(e)##value, cCb)->d}
         onKeyDown={keydownHandler(s, d)}
         onPaste={_ => OnPaste(() => TimerReset->d)->d}
         onDrop={e => e->ReactEvent.Mouse.preventDefault}
       />
-      {s.iteration == 0 || s.disabled
+      {s.iteration <= initState.iteration || s.disabled
          ? React.null
          : <button
              className="append button"
@@ -184,7 +203,7 @@ let make = (~disabled=false, ~name="password", ~onContent=(_, _) => ()) => {
            <Timer onTimerEnd={onProgressEnd(d, timerSetter)} fs=timer />
          </div>
        : React.null}
-    {s.iteration == 0
+    {s.iteration == initState.iteration
        ? ReasonReact.null
        : <div className="input-group">
            <div className="reasons">
