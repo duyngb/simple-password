@@ -156,7 +156,7 @@ let make = (~disabled=false, ~name="password", ~onContent=(_, _) => ()) => {
       </label>
       <input
         name
-        type_="password"
+        type_={s.showed ? "text" : "password"}
         placeholder="Just a simple password..."
         autoComplete="new-password"
         required=true
