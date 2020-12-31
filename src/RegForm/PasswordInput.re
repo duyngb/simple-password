@@ -111,7 +111,7 @@ let reducer = (s, action) =>
       // increase iteration to display error on initial paste
       iteration: s.iteration + 1,
     };
-  | OnDisabledSet(disabled) => {...initState, content: s.content, disabled}
+  | OnDisabledSet(disabled) => {...s, disabled}
   | Toggle => {...s, showed: !s.showed, timer: true}
   };
 
