@@ -93,7 +93,14 @@ let reducer = (s, action) =>
     state;
   | Respect(keyCode) =>
     stateCheck({...s, respected: Some(keyCode == 70)}, s.content)
-  | TimerReset => initState
+  | TimerReset =>
+    let state = stateCheck(s, s.content);
+    {
+      ...initState,
+      iteration: state.iteration,
+      passed: [],
+      failed: state.failed,
+    };
   | OnPaste(cb) =>
     // This reduce call have side effect!
     let _ = Js.Global.setTimeout(cb, 5000);
@@ -109,16 +116,6 @@ let reducer = (s, action) =>
   | Toggle => {...s, showed: !s.showed, timer: true}
   };
 
-let onProgressEnd = (stateReducer, timerSetter, _) => {
-  timerSetter(_ => false);
-  stateReducer(TimerReset);
-};
-
-let enableTimer = (stateReducer, timerSetter, _) => {
-  timerSetter(_ => true);
-  stateReducer(Toggle);
-};
-
 module Timer = {
   /**
    * Animated timer.
@@ -130,9 +127,9 @@ module Timer = {
    * input text, yay!)
    */
   [@react.component]
-  let make = (~fs, ~onTimerEnd=_ => ()) => {
+  let make = (~onTimerEnd=_ => ()) => {
     <div className="progress">
-      <div className="progress-bar" disabled={!fs} onAnimationEnd=onTimerEnd />
+      <div className="progress-bar" onAnimationEnd=onTimerEnd />
     </div>;
   };
 };
@@ -140,7 +137,6 @@ module Timer = {
 [@react.component]
 let make = (~disabled=false, ~name="password", ~onContent=(_, _) => ()) => {
   let (s, d) = React.useReducer(reducer, initState);
-  let (timer, timerSetter) = React.useState(() => false);
 
   // disabled props changes is a signal on stage changed;
   // timer should be cancled on stage progress, too
@@ -193,14 +189,14 @@ let make = (~disabled=false, ~name="password", ~onContent=(_, _) => ()) => {
          : <button
              className="append button"
              reversed={s.showed}
-             onClick={enableTimer(d, timerSetter)}>
+             onClick={_ => Toggle->d}>
              <i> "Hint"->React.string </i>
            </button>}
     </div>
     {s.timer
        ? <div className="input-group">
            <div className="prepend preserved-width" />
-           <Timer onTimerEnd={onProgressEnd(d, timerSetter)} fs=timer />
+           <Timer onTimerEnd={_ => TimerReset->d} />
          </div>
        : React.null}
     {s.iteration == initState.iteration
