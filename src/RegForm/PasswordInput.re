@@ -18,7 +18,10 @@ let initState = {
   timer: false,
 };
 
-let isStateValid = s => s.respected == Some(true) && s.failed == None;
+let isStateValid = s =>
+  s.respected == Some(true)
+  && s.failed == None
+  && s.iteration > initState.iteration;
 
 // Utilities for splitting validate map into passes and fails
 let rec ruleSplit = (a, allPassed) =>
@@ -51,10 +54,11 @@ let findFailed = (state, content) => {
 
 /** Available actions. */
 type action =
-  | OnChange(string, (string, bool) => unit)
+  | OnChange(string)
   | Respect(int)
   | TimerReset
   | OnPaste(unit => unit)
+  | OnDisabledSet(bool)
   | Toggle;
 
 let keydownHandler = (s, d, e) =>
@@ -86,29 +90,30 @@ let stateCheck = (s, content) => {
 /** Unified reducer. */
 let reducer = (s, action) =>
   switch (action) {
-  | OnChange(content, onContent) =>
-    let state = stateCheck(s, content);
-    onContent(state.content, state.failed == None);
-    state;
-  | Respect(keyCode) =>
-    stateCheck({...s, respected: Some(keyCode == 70)}, s.content)
-  | TimerReset => initState
+  | OnChange(content) => stateCheck(s, content)
+  | Respect(k) => stateCheck({...s, respected: Some(k == 70)}, s.content)
+  | TimerReset =>
+    let state = stateCheck(s, s.content);
+    {
+      ...initState,
+      iteration: state.iteration,
+      passed: [],
+      failed: state.failed,
+    };
   | OnPaste(cb) =>
     // This reduce call have side effect!
     let _ = Js.Global.setTimeout(cb, 5000);
-    {...s, disabled: true, passed: [], failed: Some(rules->List.hd.r)};
+    {
+      ...s,
+      disabled: true,
+      passed: [],
+      failed: Some(rules->List.hd.r),
+      // increase iteration to display error on initial paste
+      iteration: s.iteration + 1,
+    };
+  | OnDisabledSet(disabled) => {...s, disabled}
   | Toggle => {...s, showed: !s.showed, timer: true}
   };
-
-let onProgressEnd = (stateReducer, timerSetter, _) => {
-  timerSetter(_ => false);
-  stateReducer(TimerReset);
-};
-
-let enableTimer = (stateReducer, timerSetter, _) => {
-  timerSetter(_ => true);
-  stateReducer(Toggle);
-};
 
 module Timer = {
   /**
@@ -121,32 +126,44 @@ module Timer = {
    * input text, yay!)
    */
   [@react.component]
-  let make = (~fs, ~onTimerEnd=_ => ()) => {
+  let make = (~onTimerEnd=_ => ()) => {
     <div className="progress">
-      <div className="progress-bar" disabled={!fs} onAnimationEnd=onTimerEnd />
+      <div className="progress-bar" onAnimationEnd=onTimerEnd />
     </div>;
   };
 };
 
 [@react.component]
-let make = (~disabled, ~onContent=(_, _) => ()) => {
-  let (s, d) = React.useReducer(reducer, initState);
-  let (timer, timerSetter) = React.useState(() => false);
+let make =
+    (
+      ~disabled=false,
+      ~passed=false,
+      ~name="password",
+      ~repeat=false,
+      ~onContent=(_, _) => (),
+    ) => {
+  let (s, d) =
+    React.useReducer(
+      reducer,
+      {...initState, respected: repeat ? Some(true) : None},
+    );
 
-  // These are used to skip first render of "onContent" changing
-  // from upper component.
-  let (cCb, setCb) = React.useState(((), _, _) => ());
-  let firstRender = React.useRef(true);
+  // disabled props changes is a signal on stage changed;
+  // timer should be cancled on stage progress, too
   React.useEffect1(
     () => {
-      if (firstRender.current) {
-        firstRender.current = false;
-      } else {
-        setCb(_ => onContent);
-      };
+      OnDisabledSet(disabled)->d;
       None;
     },
-    [|onContent|],
+    [|disabled|],
+  );
+
+  React.useEffect1(
+    () => {
+      onContent(s.content, isStateValid(s));
+      None;
+    },
+    [|s|],
   );
 
   <>
@@ -155,35 +172,40 @@ let make = (~disabled, ~onContent=(_, _) => ()) => {
         "Password"->React.string
       </label>
       <input
-        type_="password"
-        placeholder="Just a simple password..."
+        name
+        type_={s.showed ? "text" : "password"}
+        placeholder={
+          repeat
+            ? "Repeat your above secret"  //
+            : "Just a simple password..." //
+        }
         autoComplete="new-password"
         required=true
         minLength=8
         maxLength=25
         value={s.content}
-        disabled={disabled || s.disabled}
-        onChange={e => OnChange(ReactEvent.Form.target(e)##value, cCb)->d}
+        disabled={s.disabled}
+        onChange={e => OnChange(ReactEvent.Form.target(e)##value)->d}
         onKeyDown={keydownHandler(s, d)}
         onPaste={_ => OnPaste(() => TimerReset->d)->d}
         onDrop={e => e->ReactEvent.Mouse.preventDefault}
       />
-      {s.iteration == 0 || s.disabled
+      {s.iteration <= initState.iteration || s.disabled || repeat
          ? React.null
          : <button
              className="append button"
              reversed={s.showed}
-             onClick={enableTimer(d, timerSetter)}>
+             onClick={_ => Toggle->d}>
              <i> "Hint"->React.string </i>
            </button>}
     </div>
     {s.timer
        ? <div className="input-group">
            <div className="prepend preserved-width" />
-           <Timer onTimerEnd={onProgressEnd(d, timerSetter)} fs=timer />
+           <Timer onTimerEnd={_ => TimerReset->d} />
          </div>
        : React.null}
-    {s.iteration == 0
+    {s.iteration == initState.iteration || repeat || passed
        ? ReasonReact.null
        : <div className="input-group">
            <div className="reasons">
@@ -200,5 +222,18 @@ let make = (~disabled, ~onContent=(_, _) => ()) => {
               }}
            </div>
          </div>}
+    {s.iteration >= initState.iteration && repeat
+       ? switch (s.failed) {
+         | None => React.null
+         | Some(reason) =>
+           <div className="input-group">
+             <div className="reasons">
+               <div className="failed" key={s.iteration->string_of_int}>
+                 reason->React.string
+               </div>
+             </div>
+           </div>
+         }
+       : React.null}
   </>;
 };
