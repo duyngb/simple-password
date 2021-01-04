@@ -18,7 +18,10 @@ let initState = {
   timer: false,
 };
 
-let isStateValid = s => s.respected == Some(true) && s.failed == None;
+let isStateValid = s =>
+  s.respected == Some(true)
+  && s.failed == None
+  && s.iteration > initState.iteration;
 
 // Utilities for splitting validate map into passes and fails
 let rec ruleSplit = (a, allPassed) =>
@@ -51,7 +54,7 @@ let findFailed = (state, content) => {
 
 /** Available actions. */
 type action =
-  | OnChange(string, (string, bool) => unit)
+  | OnChange(string)
   | Respect(int)
   | TimerReset
   | OnPaste(unit => unit)
@@ -87,12 +90,8 @@ let stateCheck = (s, content) => {
 /** Unified reducer. */
 let reducer = (s, action) =>
   switch (action) {
-  | OnChange(content, onContent) =>
-    let state = stateCheck(s, content);
-    onContent(state.content, state.failed == None);
-    state;
-  | Respect(keyCode) =>
-    stateCheck({...s, respected: Some(keyCode == 70)}, s.content)
+  | OnChange(content) => stateCheck(s, content)
+  | Respect(k) => stateCheck({...s, respected: Some(k == 70)}, s.content)
   | TimerReset =>
     let state = stateCheck(s, s.content);
     {
@@ -148,20 +147,12 @@ let make = (~disabled=false, ~name="password", ~onContent=(_, _) => ()) => {
     [|disabled|],
   );
 
-  // These are used to skip first render of "onContent" changing
-  // from upper component.
-  let (cCb, setCb) = React.useState(((), _, _) => ());
-  let firstRender = React.useRef(true);
   React.useEffect1(
     () => {
-      if (firstRender.current) {
-        firstRender.current = false;
-      } else {
-        setCb(_ => onContent);
-      };
+      onContent(s.content, isStateValid(s));
       None;
     },
-    [|onContent|],
+    [|s|],
   );
 
   <>
@@ -179,7 +170,7 @@ let make = (~disabled=false, ~name="password", ~onContent=(_, _) => ()) => {
         maxLength=25
         value={s.content}
         disabled={s.disabled}
-        onChange={e => OnChange(ReactEvent.Form.target(e)##value, cCb)->d}
+        onChange={e => OnChange(ReactEvent.Form.target(e)##value)->d}
         onKeyDown={keydownHandler(s, d)}
         onPaste={_ => OnPaste(() => TimerReset->d)->d}
         onDrop={e => e->ReactEvent.Mouse.preventDefault}
