@@ -7,7 +7,9 @@ type stage =
 type state_t = {
   key: int,
   uservalid: bool,
+  c1: string,
   c1valid: bool,
+  c2: string,
   c2valid: bool,
   stage,
 };
@@ -22,7 +24,9 @@ type action =
 let initState = {
   key: 0,
   uservalid: false,
+  c1: "",
   c1valid: false,
+  c2: "",
   c2valid: false,
   stage: OnUserName,
 };
@@ -43,19 +47,18 @@ let reducer = (s, a) => {
       {...s, stage};
     };
   | UsrContent(_username, uservalid) => {...s, uservalid}
-  | Content1(_content1, c1valid) => {...s, c1valid}
-  | Content2(_content2, c2valid) => {...s, c2valid}
+  | Content1(c1, c1valid) => {...s, c1, c1valid}
+  | Content2(c2, c2valid) => {...s, c2, c2valid}
   | ResetAll => {...initState, key: s.key + 1}
   };
 };
 
 let stateValid = s =>
-  switch (s.stage) {
-  | OnUserName => s.uservalid
-  | OnPassword => s.c1valid
-  | OnPassword2 => s.c2valid
-  | FinalStage => true
-  };
+  s.stage == FinalStage
+    ? true
+    : s.uservalid
+      && (s.stage >= OnPassword ? s.c1valid : true)
+      && (s.stage >= OnPassword2 ? s.c2valid : true);
 
 /** Should component render? */
 let r = (condition, element) => condition ? element : React.null;
@@ -82,13 +85,16 @@ let make = () => {
       {s.stage >= OnPassword
          ? <PasswordInput
              disabled={s.stage != OnPassword}
+             passed={s.stage > OnPassword}
              onContent={(c, v) => Content1(c, v)->d}
            />
          : React.null}
       {s.stage >= OnPassword2
          ? <PasswordInput
              name="password2"
+             repeat=true
              disabled={s.stage != OnPassword2}
+             passed={s.stage > OnPassword2}
              onContent={(c, v) => Content2(c, v)->d}
            />
          : React.null}

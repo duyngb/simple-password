@@ -134,8 +134,19 @@ module Timer = {
 };
 
 [@react.component]
-let make = (~disabled=false, ~name="password", ~onContent=(_, _) => ()) => {
-  let (s, d) = React.useReducer(reducer, initState);
+let make =
+    (
+      ~disabled=false,
+      ~passed=false,
+      ~name="password",
+      ~repeat=false,
+      ~onContent=(_, _) => (),
+    ) => {
+  let (s, d) =
+    React.useReducer(
+      reducer,
+      {...initState, respected: repeat ? Some(true) : None},
+    );
 
   // disabled props changes is a signal on stage changed;
   // timer should be cancled on stage progress, too
@@ -163,7 +174,11 @@ let make = (~disabled=false, ~name="password", ~onContent=(_, _) => ()) => {
       <input
         name
         type_={s.showed ? "text" : "password"}
-        placeholder="Just a simple password..."
+        placeholder={
+          repeat
+            ? "Repeat your above secret"  //
+            : "Just a simple password..." //
+        }
         autoComplete="new-password"
         required=true
         minLength=8
@@ -175,7 +190,7 @@ let make = (~disabled=false, ~name="password", ~onContent=(_, _) => ()) => {
         onPaste={_ => OnPaste(() => TimerReset->d)->d}
         onDrop={e => e->ReactEvent.Mouse.preventDefault}
       />
-      {s.iteration <= initState.iteration || s.disabled
+      {s.iteration <= initState.iteration || s.disabled || repeat
          ? React.null
          : <button
              className="append button"
@@ -190,7 +205,7 @@ let make = (~disabled=false, ~name="password", ~onContent=(_, _) => ()) => {
            <Timer onTimerEnd={_ => TimerReset->d} />
          </div>
        : React.null}
-    {s.iteration == initState.iteration
+    {s.iteration == initState.iteration || repeat || passed
        ? ReasonReact.null
        : <div className="input-group">
            <div className="reasons">
@@ -207,5 +222,18 @@ let make = (~disabled=false, ~name="password", ~onContent=(_, _) => ()) => {
               }}
            </div>
          </div>}
+    {s.iteration >= initState.iteration && repeat
+       ? switch (s.failed) {
+         | None => React.null
+         | Some(reason) =>
+           <div className="input-group">
+             <div className="reasons">
+               <div className="failed" key={s.iteration->string_of_int}>
+                 reason->React.string
+               </div>
+             </div>
+           </div>
+         }
+       : React.null}
   </>;
 };
