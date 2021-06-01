@@ -10,7 +10,8 @@ baseConfig.devServer = {
   headers: {
     'Connection': 'close',
     'Cache-Control': 'no-store, no-cache',
-  }
+  },
+  static: path.join(__dirname, "docs"),
 };
 baseConfig.mode = 'development';
 baseConfig.devtool = 'inline-source-map';
